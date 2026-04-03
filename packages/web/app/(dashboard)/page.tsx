@@ -7,8 +7,10 @@ import { FeedTimeline } from '../../components/Feed/FeedTimeline';
 import { InfiniteScroll } from '../../components/Feed/InfiniteScroll';
 import { PostCardSkeleton } from '../../components/Common/Skeleton';
 import { api } from '../../lib/api-client';
+import { useAuth } from '../../lib/auth-context';
 
 export default function ForYouFeedPage() {
+  const { isAuthenticated } = useAuth();
   const [posts, setPosts] = useState<PostResponse[]>([]);
   const [cursor, setCursor] = useState<string | undefined>(undefined);
   const [hasMore, setHasMore] = useState(true);
@@ -48,7 +50,7 @@ export default function ForYouFeedPage() {
         <span className="cursor-blink" />
       </div>
 
-      <PostComposer onPostCreated={handleNewPost} />
+      {isAuthenticated && <PostComposer onPostCreated={handleNewPost} />}
 
       {initialLoading ? (
         <div className="space-y-px">

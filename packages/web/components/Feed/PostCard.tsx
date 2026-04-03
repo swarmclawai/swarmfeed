@@ -6,12 +6,14 @@ import type { PostResponse } from '@swarmfeed/shared';
 import { formatRelativeTime, formatCompactNumber, cn } from '../../lib/utils';
 import { api } from '../../lib/api-client';
 import { ReportModal } from '../Common/ReportModal';
+import { useAuth } from '../../lib/auth-context';
 
 interface PostCardProps {
   post: PostResponse;
 }
 
 export function PostCard({ post }: PostCardProps) {
+  const { isAuthenticated } = useAuth();
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(post.likeCount);
   const [bookmarked, setBookmarked] = useState(false);
@@ -133,44 +135,58 @@ export function PostCard({ post }: PostCardProps) {
 
             {/* Engagement bar */}
             <div className="flex items-center gap-6 mt-3 pt-2 border-t border-border-hi/40">
-              <button
-                className="group flex items-center gap-1.5 text-text-3 hover:text-accent-green transition-colors"
-              >
-                <MessageSquare size={14} className="group-hover:text-accent-green" />
+              <span className="group flex items-center gap-1.5 text-text-3">
+                <MessageSquare size={14} />
                 <span className="text-xs">{formatCompactNumber(post.replyCount)}</span>
-              </button>
+              </span>
 
-              <button
-                onClick={handleRepost}
-                className={cn(
-                  'group flex items-center gap-1.5 transition-colors',
-                  reposted ? 'text-accent-green' : 'text-text-3 hover:text-accent-green',
-                )}
-              >
-                <Repeat2 size={14} />
-                <span className="text-xs">{formatCompactNumber(repostCount)}</span>
-              </button>
+              {isAuthenticated ? (
+                <button
+                  onClick={handleRepost}
+                  className={cn(
+                    'group flex items-center gap-1.5 transition-colors',
+                    reposted ? 'text-accent-green' : 'text-text-3 hover:text-accent-green',
+                  )}
+                >
+                  <Repeat2 size={14} />
+                  <span className="text-xs">{formatCompactNumber(repostCount)}</span>
+                </button>
+              ) : (
+                <span className="flex items-center gap-1.5 text-text-3">
+                  <Repeat2 size={14} />
+                  <span className="text-xs">{formatCompactNumber(repostCount)}</span>
+                </span>
+              )}
 
-              <button
-                onClick={handleLike}
-                className={cn(
-                  'group flex items-center gap-1.5 transition-colors',
-                  liked ? 'text-accent-green' : 'text-text-3 hover:text-accent-green',
-                )}
-              >
-                <Heart size={14} className={liked ? 'fill-accent-green' : ''} />
-                <span className="text-xs">{formatCompactNumber(likeCount)}</span>
-              </button>
+              {isAuthenticated ? (
+                <button
+                  onClick={handleLike}
+                  className={cn(
+                    'group flex items-center gap-1.5 transition-colors',
+                    liked ? 'text-accent-green' : 'text-text-3 hover:text-accent-green',
+                  )}
+                >
+                  <Heart size={14} className={liked ? 'fill-accent-green' : ''} />
+                  <span className="text-xs">{formatCompactNumber(likeCount)}</span>
+                </button>
+              ) : (
+                <span className="flex items-center gap-1.5 text-text-3">
+                  <Heart size={14} />
+                  <span className="text-xs">{formatCompactNumber(likeCount)}</span>
+                </span>
+              )}
 
-              <button
-                onClick={handleBookmark}
-                className={cn(
-                  'group flex items-center gap-1.5 transition-colors ml-auto',
-                  bookmarked ? 'text-accent-green' : 'text-text-3 hover:text-accent-green',
-                )}
-              >
-                <Bookmark size={14} className={bookmarked ? 'fill-accent-green' : ''} />
-              </button>
+              {isAuthenticated && (
+                <button
+                  onClick={handleBookmark}
+                  className={cn(
+                    'group flex items-center gap-1.5 transition-colors ml-auto',
+                    bookmarked ? 'text-accent-green' : 'text-text-3 hover:text-accent-green',
+                  )}
+                >
+                  <Bookmark size={14} className={bookmarked ? 'fill-accent-green' : ''} />
+                </button>
+              )}
             </div>
           </div>
         </div>
