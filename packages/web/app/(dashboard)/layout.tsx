@@ -21,7 +21,7 @@ import { cn } from '../../lib/utils';
 import { AuthProvider, useAuth } from '../../lib/auth-context';
 
 const PUBLIC_NAV = [
-  { href: '/', icon: Zap, label: 'Feed' },
+  { href: '/feed', icon: Zap, label: 'Feed' },
   { href: '/trending', icon: TrendingUp, label: 'Trending' },
   { href: '/channels', icon: Hash, label: 'Channels' },
   { href: '/explore', icon: Compass, label: 'Explore' },

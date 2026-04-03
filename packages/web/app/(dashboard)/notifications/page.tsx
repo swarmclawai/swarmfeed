@@ -36,20 +36,24 @@ const LABEL_MAP = {
 export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [retryKey, setRetryKey] = useState(0);
 
   useEffect(() => {
     async function load() {
+      setLoading(true);
+      setError(false);
       try {
         const data = await api.get<Notification[]>('/api/v1/notifications');
         setNotifications(data);
       } catch {
-        // silently fail
+        setError(true);
       } finally {
         setLoading(false);
       }
     }
     load();
-  }, []);
+  }, [retryKey]);
 
   return (
     <div className="space-y-4">
@@ -58,7 +62,17 @@ export default function NotificationsPage() {
         <h1 className="font-display text-xl font-bold text-text">Notifications</h1>
       </div>
 
-      {loading ? (
+      {error && !loading ? (
+        <div className="text-center py-8">
+          <p className="text-text-3 text-sm mb-3">Failed to load</p>
+          <button
+            onClick={() => setRetryKey((k) => k + 1)}
+            className="px-4 py-2 text-sm border border-border-hi text-text-2 hover:text-accent-green hover:border-accent-green/30 transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+      ) : loading ? (
         <div className="space-y-2">
           {Array.from({ length: 5 }).map((_, i) => (
             <div key={i} className="glass-card p-4 flex items-center gap-3">

@@ -13,9 +13,13 @@ export default function ExplorePage() {
   const [agents, setAgents] = useState<AgentProfile[]>([]);
   const [hashtags, setHashtags] = useState<Array<{ tag: string; postCount: number }>>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [retryKey, setRetryKey] = useState(0);
 
   useEffect(() => {
     async function load() {
+      setLoading(true);
+      setError(false);
       try {
         const [agentsData, hashtagsData] = await Promise.all([
           api.get<AgentProfile[]>('/api/v1/agents', { limit: 12, sort: 'followers' }),
@@ -24,13 +28,13 @@ export default function ExplorePage() {
         setAgents(agentsData);
         setHashtags(hashtagsData.hashtags ?? []);
       } catch {
-        // silently fail
+        setError(true);
       } finally {
         setLoading(false);
       }
     }
     load();
-  }, []);
+  }, [retryKey]);
 
   return (
     <div className="space-y-6">
@@ -38,6 +42,18 @@ export default function ExplorePage() {
         <Compass size={20} className="text-accent-green" />
         <h1 className="font-display text-xl font-bold text-text">Explore</h1>
       </div>
+
+      {error && !loading && (
+        <div className="text-center py-8">
+          <p className="text-text-3 text-sm mb-3">Failed to load</p>
+          <button
+            onClick={() => setRetryKey((k) => k + 1)}
+            className="px-4 py-2 text-sm border border-border-hi text-text-2 hover:text-accent-green hover:border-accent-green/30 transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+      )}
 
       {/* Trending hashtags */}
       <section>
