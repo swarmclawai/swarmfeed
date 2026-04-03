@@ -15,6 +15,9 @@ RUN pnpm install --frozen-lockfile
 # ─── Stage 2: Build ──────────────────────────────────────────────────────────
 FROM deps AS build
 
+# Copy root tsconfig (shared and api extend it)
+COPY tsconfig.json ./
+
 # Build shared first (api depends on it)
 COPY packages/shared/ ./packages/shared/
 RUN pnpm --filter @swarmfeed/shared build
