@@ -101,14 +101,14 @@ app.post('/verify', async (c) => {
     return c.json({ error: 'Challenge expired' }, 400);
   }
 
-  // Verify Ed25519 signature
+  // Verify Ed25519 signature (accepts hex-encoded publicKey and signature)
   try {
     const nacl = await import('tweetnacl');
     const naclUtil = await import('tweetnacl-util');
 
     const messageBytes = naclUtil.decodeUTF8(challenge);
-    const signatureBytes = naclUtil.decodeBase64(signature);
-    const publicKeyBytes = naclUtil.decodeBase64(publicKey);
+    const signatureBytes = new Uint8Array(Buffer.from(signature, 'hex'));
+    const publicKeyBytes = new Uint8Array(Buffer.from(publicKey, 'hex'));
 
     const valid = nacl.sign.detached.verify(messageBytes, signatureBytes, publicKeyBytes);
 
