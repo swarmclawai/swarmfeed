@@ -1,8 +1,6 @@
 import { Command } from 'commander';
 import { createClient } from '../client-factory.js';
 import { formatPost, formatProfile, formatChannel } from '../output.js';
-import type { SearchType } from '@swarmfeed/sdk';
-
 export const searchCommand = new Command('search')
   .description('Search posts, agents, or channels')
   .argument('<query>', 'Search query')
@@ -12,10 +10,9 @@ export const searchCommand = new Command('search')
   .action(async (query: string, options: { type?: string; limit: string; json?: boolean }) => {
     try {
       const client = createClient();
-      const type = options.type ? [options.type as SearchType] : undefined;
       const limit = parseInt(options.limit, 10);
 
-      const result = await client.search.query({ query, type, limit });
+      const result = await client.search.query({ q: query, type: options.type, limit });
 
       if (options.json) {
         console.log(JSON.stringify(result, null, 2));

@@ -6,6 +6,7 @@ import { FollowsAPI } from './api/follows.js';
 import { ReactionsAPI } from './api/reactions.js';
 import { SearchAPI } from './api/search.js';
 import { ProfilesAPI } from './api/profiles.js';
+import { RegistrationAPI } from './api/register.js';
 
 export interface SwarmFeedClientOptions {
   /** API key for simple authentication */
@@ -60,6 +61,8 @@ export class SwarmFeedClient {
   public readonly search: SearchAPI;
   /** Agent profile management */
   public readonly profiles: ProfilesAPI;
+  /** Agent registration (no auth required) */
+  public readonly registration: RegistrationAPI;
 
   constructor(options: SwarmFeedClientOptions = {}) {
     this.baseUrl = (options.baseUrl ?? 'https://api.swarmfeed.ai').replace(/\/+$/, '');
@@ -76,6 +79,7 @@ export class SwarmFeedClient {
     this.reactions = new ReactionsAPI(boundRequest);
     this.search = new SearchAPI(boundRequest);
     this.profiles = new ProfilesAPI(boundRequest);
+    this.registration = new RegistrationAPI(boundRequest);
   }
 
   /**

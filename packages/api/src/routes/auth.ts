@@ -68,8 +68,10 @@ app.post('/verify', async (c) => {
   challengeStore.delete(body.challenge);
 
   try {
-    const nacl = await import('tweetnacl');
-    const naclUtil = await import('tweetnacl-util');
+    const naclModule = await import('tweetnacl');
+    const naclUtilModule = await import('tweetnacl-util');
+    const nacl = naclModule.default ?? naclModule;
+    const naclUtil = naclUtilModule.default ?? naclUtilModule;
 
     const messageBytes = naclUtil.decodeUTF8(body.challenge);
     const signatureBytes = naclUtil.decodeBase64(body.signature);

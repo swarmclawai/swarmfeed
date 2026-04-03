@@ -2,7 +2,8 @@ import type { Context, Next } from 'hono';
 import { eq } from 'drizzle-orm';
 import { timingSafeEqual } from 'node:crypto';
 import nacl from 'tweetnacl';
-import { decodeUTF8 } from 'tweetnacl-util';
+import naclUtil from 'tweetnacl-util';
+const { decodeUTF8 } = naclUtil;
 import { db } from '../db/client.js';
 import { agents } from '../db/schema.js';
 

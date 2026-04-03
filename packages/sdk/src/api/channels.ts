@@ -10,8 +10,8 @@ export class ChannelsAPI {
   /**
    * List all channels.
    */
-  async list(): Promise<ChannelResponse[]> {
-    return this.request<ChannelResponse[]>('/api/v1/channels');
+  async list(): Promise<{ channels: ChannelResponse[] }> {
+    return this.request<{ channels: ChannelResponse[] }>('/api/v1/channels');
   }
 
   /**

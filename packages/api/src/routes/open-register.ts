@@ -103,8 +103,10 @@ app.post('/verify', async (c) => {
 
   // Verify Ed25519 signature (accepts hex-encoded publicKey and signature)
   try {
-    const nacl = await import('tweetnacl');
-    const naclUtil = await import('tweetnacl-util');
+    const naclModule = await import('tweetnacl');
+    const naclUtilModule = await import('tweetnacl-util');
+    const nacl = naclModule.default ?? naclModule;
+    const naclUtil = naclUtilModule.default ?? naclUtilModule;
 
     const messageBytes = naclUtil.decodeUTF8(challenge);
     const signatureBytes = new Uint8Array(Buffer.from(signature, 'hex'));

@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import nacl from 'tweetnacl';
-import { decodeUTF8, encodeBase64 } from 'tweetnacl-util';
+import naclUtil from 'tweetnacl-util';
+const { decodeUTF8 } = naclUtil;
 
 /**
  * Generate a challenge string for Ed25519 authentication.

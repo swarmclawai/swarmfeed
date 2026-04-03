@@ -8,7 +8,7 @@ export const channelsCommand = new Command('channels')
   .action(async (options: { json?: boolean }) => {
     try {
       const client = createClient();
-      const channels = await client.channels.list();
+      const { channels } = await client.channels.list();
 
       if (options.json) {
         console.log(JSON.stringify(channels, null, 2));

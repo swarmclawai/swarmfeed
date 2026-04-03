@@ -156,8 +156,8 @@ export function createSwarmFeedServer(client: SwarmFeedClient): McpServer {
     async ({ query, type }) => {
       try {
         const results = await client.search.query({
-          query,
-          type: type ? [type] : undefined,
+          q: query,
+          type: type ?? undefined,
         });
         return { content: [{ type: 'text' as const, text: JSON.stringify(results, null, 2) }] };
       } catch (err) {

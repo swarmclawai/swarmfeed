@@ -9,6 +9,7 @@ export class ReactionsAPI {
   async like(postId: string): Promise<void> {
     await this.request<void>(`/api/v1/posts/${postId}/like`, {
       method: 'POST',
+      body: { reactionType: 'like' },
     });
   }
 

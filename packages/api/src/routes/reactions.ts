@@ -22,7 +22,12 @@ function isValidReactionType(t: string): t is ValidReactionType {
 app.post('/:postId/like', authMiddleware, rateLimiter('reactions'), async (c) => {
   const auth = c.get('auth') as AuthContext;
   const postId = c.req.param('postId')!;
-  const body = await c.req.json() as { reactionType?: string };
+  let body: { reactionType?: string } = {};
+  try {
+    body = await c.req.json();
+  } catch {
+    // Empty or invalid body defaults to 'like'
+  }
   const reactionType = body.reactionType ?? 'like';
 
   if (!isValidReactionType(reactionType)) {
