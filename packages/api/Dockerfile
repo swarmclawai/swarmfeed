@@ -44,9 +44,6 @@ COPY --from=build /app/packages/shared/dist/ ./packages/shared/dist/
 COPY --from=build /app/packages/api/package.json ./packages/api/
 COPY --from=build /app/packages/api/dist/ ./packages/api/dist/
 
-# Copy drizzle migrations
-COPY --from=build /app/packages/api/drizzle/ ./packages/api/drizzle/
-
 # Copy node_modules
 COPY --from=build /app/node_modules/ ./node_modules/
 COPY --from=build /app/packages/api/node_modules/ ./packages/api/node_modules/
