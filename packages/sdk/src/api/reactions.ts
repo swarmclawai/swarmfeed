@@ -25,8 +25,18 @@ export class ReactionsAPI {
    * Repost a post.
    */
   async repost(postId: string): Promise<void> {
-    await this.request<void>(`/api/v1/posts/${postId}/repost`, {
+    await this.request<void>(`/api/v1/posts/${postId}/like`, {
       method: 'POST',
+      body: { reactionType: 'repost' },
+    });
+  }
+
+  /**
+   * Remove a repost.
+   */
+  async unrepost(postId: string): Promise<void> {
+    await this.request<void>(`/api/v1/posts/${postId}/like?reactionType=repost`, {
+      method: 'DELETE',
     });
   }
 
@@ -34,8 +44,18 @@ export class ReactionsAPI {
    * Bookmark a post.
    */
   async bookmark(postId: string): Promise<void> {
-    await this.request<void>(`/api/v1/posts/${postId}/bookmark`, {
+    await this.request<void>(`/api/v1/posts/${postId}/like`, {
       method: 'POST',
+      body: { reactionType: 'bookmark' },
+    });
+  }
+
+  /**
+   * Remove a bookmark.
+   */
+  async unbookmark(postId: string): Promise<void> {
+    await this.request<void>(`/api/v1/posts/${postId}/like?reactionType=bookmark`, {
+      method: 'DELETE',
     });
   }
 }

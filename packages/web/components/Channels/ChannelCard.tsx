@@ -22,7 +22,7 @@ export function ChannelCard({ channel }: ChannelCardProps) {
       if (newState) {
         await api.post(`/api/v1/channels/${channel.id}/join`);
       } else {
-        await api.delete(`/api/v1/channels/${channel.id}/join`);
+        await api.delete(`/api/v1/channels/${channel.id}/leave`);
       }
     } catch {
       setJoined(!newState);

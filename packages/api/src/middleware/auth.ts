@@ -1,5 +1,8 @@
 import type { Context, Next } from 'hono';
 import { eq } from 'drizzle-orm';
+import { timingSafeEqual } from 'node:crypto';
+import nacl from 'tweetnacl';
+import { decodeUTF8 } from 'tweetnacl-util';
 import { db } from '../db/client.js';
 import { agents } from '../db/schema.js';
 
@@ -11,6 +14,17 @@ export interface AuthContext {
 // Use a generic context type to avoid Hono env mismatch errors.
 // The route-level Hono<AppEnv> ensures `c.get('auth')` is typed.
 type AnyContext = Context<Record<string, Record<string, unknown>>>;
+
+const CHALLENGE_MAX_AGE_MS = 5 * 60 * 1000; // 5 minutes
+
+function checkAdmin(c: AnyContext): boolean {
+  const adminKey = process.env.ADMIN_KEY;
+  if (!adminKey) return false;
+  const headerKey = c.req.header('X-Admin-Key');
+  if (!headerKey) return false;
+  if (adminKey.length !== headerKey.length) return false;
+  return timingSafeEqual(Buffer.from(adminKey), Buffer.from(headerKey));
+}
 
 /**
  * Authentication middleware supporting two modes:
@@ -28,9 +42,7 @@ export async function authMiddleware(c: AnyContext, next: Next) {
   }
 
   const token = header.slice(7);
-
-  // Check for admin header (simple admin scheme for moderation endpoints)
-  const isAdmin = c.req.header('X-Admin-Key') === process.env.ADMIN_KEY;
+  const isAdmin = checkAdmin(c);
 
   // Mode 1 - API key auth
   if (token.startsWith('sf_live_')) {
@@ -46,13 +58,31 @@ export async function authMiddleware(c: AnyContext, next: Next) {
     return next();
   }
 
-  // Mode 2 - Challenge-response: <agentId>:<challenge>:<signature>
-  const parts = token.split(':');
-  if (parts.length < 3) {
+  // Mode 2 - Challenge-response: <agentId>:<timestamp>:<uuid>:<signature>
+  // Challenge format is "timestamp:uuid", so the full token is "agentId:timestamp:uuid:signature"
+  const firstColon = token.indexOf(':');
+  if (firstColon === -1) {
     return c.json({ error: 'Invalid token format' }, 401);
   }
 
-  const agentId = parts[0];
+  const agentId = token.slice(0, firstColon);
+  const rest = token.slice(firstColon + 1);
+
+  // Find the last colon to separate challenge from signature
+  const lastColon = rest.lastIndexOf(':');
+  if (lastColon === -1) {
+    return c.json({ error: 'Invalid token format' }, 401);
+  }
+
+  const challenge = rest.slice(0, lastColon); // "timestamp:uuid"
+  const signatureHex = rest.slice(lastColon + 1);
+
+  // Validate challenge timestamp (first segment before colon)
+  const challengeTimestamp = parseInt(challenge.split(':')[0], 10);
+  if (isNaN(challengeTimestamp) || Date.now() - challengeTimestamp > CHALLENGE_MAX_AGE_MS) {
+    return c.json({ error: 'Challenge expired or invalid' }, 401);
+  }
+
   // Verify the agent exists and is active
   const agent = await db.query.agents.findFirst({
     where: eq(agents.id, agentId),
@@ -62,9 +92,24 @@ export async function authMiddleware(c: AnyContext, next: Next) {
     return c.json({ error: 'Agent not found or inactive' }, 401);
   }
 
-  // For now, accept any well-formed challenge token from active agents.
-  // Full Ed25519 verification is done in the /auth/verify endpoint.
-  // In production, verify the signature against the stored public key here.
+  // Verify Ed25519 signature
+  if (!agent.publicKey) {
+    return c.json({ error: 'Agent has no public key configured' }, 401);
+  }
+
+  try {
+    const messageBytes = decodeUTF8(challenge);
+    const signatureBytes = new Uint8Array(Buffer.from(signatureHex, 'hex'));
+    const publicKeyBytes = new Uint8Array(Buffer.from(agent.publicKey, 'hex'));
+
+    const valid = nacl.sign.detached.verify(messageBytes, signatureBytes, publicKeyBytes);
+    if (!valid) {
+      return c.json({ error: 'Invalid signature' }, 401);
+    }
+  } catch {
+    return c.json({ error: 'Signature verification failed' }, 401);
+  }
+
   c.set('auth', { agentId, isAdmin } satisfies AuthContext);
   return next();
 }
@@ -81,7 +126,7 @@ export async function optionalAuth(c: AnyContext, next: Next) {
   }
 
   const token = header.slice(7);
-  const isAdmin = c.req.header('X-Admin-Key') === process.env.ADMIN_KEY;
+  const isAdmin = checkAdmin(c);
 
   if (token.startsWith('sf_live_')) {
     const agent = await db.query.agents.findFirst({
@@ -95,18 +140,52 @@ export async function optionalAuth(c: AnyContext, next: Next) {
     return next();
   }
 
-  const parts = token.split(':');
-  if (parts.length >= 3) {
-    const agentId = parts[0];
-    const agent = await db.query.agents.findFirst({
-      where: eq(agents.id, agentId),
-    });
-    if (agent?.isActive) {
+  // Challenge-response: <agentId>:<timestamp>:<uuid>:<signature>
+  const firstColon = token.indexOf(':');
+  if (firstColon === -1) {
+    c.set('auth', null);
+    return next();
+  }
+
+  const agentId = token.slice(0, firstColon);
+  const rest = token.slice(firstColon + 1);
+  const lastColon = rest.lastIndexOf(':');
+
+  if (lastColon === -1) {
+    c.set('auth', null);
+    return next();
+  }
+
+  const challenge = rest.slice(0, lastColon);
+  const signatureHex = rest.slice(lastColon + 1);
+  const challengeTimestamp = parseInt(challenge.split(':')[0], 10);
+
+  if (isNaN(challengeTimestamp) || Date.now() - challengeTimestamp > CHALLENGE_MAX_AGE_MS) {
+    c.set('auth', null);
+    return next();
+  }
+
+  const agent = await db.query.agents.findFirst({
+    where: eq(agents.id, agentId),
+  });
+
+  if (!agent?.isActive || !agent.publicKey) {
+    c.set('auth', null);
+    return next();
+  }
+
+  try {
+    const messageBytes = decodeUTF8(challenge);
+    const signatureBytes = new Uint8Array(Buffer.from(signatureHex, 'hex'));
+    const publicKeyBytes = new Uint8Array(Buffer.from(agent.publicKey, 'hex'));
+
+    const valid = nacl.sign.detached.verify(messageBytes, signatureBytes, publicKeyBytes);
+    if (valid) {
       c.set('auth', { agentId, isAdmin } satisfies AuthContext);
     } else {
       c.set('auth', null);
     }
-  } else {
+  } catch {
     c.set('auth', null);
   }
 

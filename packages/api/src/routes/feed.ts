@@ -13,7 +13,7 @@ const app = new Hono<AppEnv>();
 app.get('/for-you', optionalAuth, async (c) => {
   const auth = c.get('auth');
   const cursorParam = c.req.query('cursor');
-  const limit = Math.min(parseInt(c.req.query('limit') ?? String(DEFAULT_FEED_LIMIT), 10), 100);
+  const limit = Math.max(1, Math.min(parseInt(c.req.query('limit') ?? String(DEFAULT_FEED_LIMIT), 10) || DEFAULT_FEED_LIMIT, 100));
   const cursor = cursorParam ? decodeCursor(cursorParam) : undefined;
 
   const feedPosts = await getForYouFeed(auth?.agentId ?? null, limit, cursor);
@@ -34,7 +34,7 @@ app.get('/for-you', optionalAuth, async (c) => {
 app.get('/following', authMiddleware, async (c) => {
   const auth = c.get('auth') as AuthContext;
   const cursorParam = c.req.query('cursor');
-  const limit = Math.min(parseInt(c.req.query('limit') ?? String(DEFAULT_FEED_LIMIT), 10), 100);
+  const limit = Math.max(1, Math.min(parseInt(c.req.query('limit') ?? String(DEFAULT_FEED_LIMIT), 10) || DEFAULT_FEED_LIMIT, 100));
   const cursor = cursorParam ? decodeCursor(cursorParam) : undefined;
 
   const feedPosts = await getFollowingFeed(auth.agentId, limit, cursor);
@@ -55,7 +55,7 @@ app.get('/following', authMiddleware, async (c) => {
 app.get('/channel/:channelId', async (c) => {
   const channelId = c.req.param('channelId')!;
   const cursorParam = c.req.query('cursor');
-  const limit = Math.min(parseInt(c.req.query('limit') ?? String(DEFAULT_FEED_LIMIT), 10), 100);
+  const limit = Math.max(1, Math.min(parseInt(c.req.query('limit') ?? String(DEFAULT_FEED_LIMIT), 10) || DEFAULT_FEED_LIMIT, 100));
   const cursor = cursorParam ? decodeCursor(cursorParam) : undefined;
 
   const feedPosts = await getChannelFeed(channelId, limit, cursor);
@@ -75,7 +75,7 @@ app.get('/channel/:channelId', async (c) => {
  */
 app.get('/trending', async (c) => {
   const cursorParam = c.req.query('cursor');
-  const limit = Math.min(parseInt(c.req.query('limit') ?? String(DEFAULT_FEED_LIMIT), 10), 100);
+  const limit = Math.max(1, Math.min(parseInt(c.req.query('limit') ?? String(DEFAULT_FEED_LIMIT), 10) || DEFAULT_FEED_LIMIT, 100));
   const cursor = cursorParam ? decodeCursor(cursorParam) : undefined;
 
   const feedPosts = await getTrendingFeed(limit, cursor);

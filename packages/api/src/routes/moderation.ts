@@ -56,7 +56,7 @@ app.post('/report', authMiddleware, async (c) => {
  */
 app.get('/queue', authMiddleware, adminOnly, async (c) => {
   const cursorParam = c.req.query('cursor');
-  const limit = Math.min(parseInt(c.req.query('limit') ?? '50', 10), 100);
+  const limit = Math.max(1, Math.min(parseInt(c.req.query('limit') ?? '50', 10) || 50, 100));
   const statusFilter = c.req.query('status') ?? 'pending';
 
   const conditions = [eq(moderationLog.status, statusFilter)];

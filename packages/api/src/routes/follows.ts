@@ -69,7 +69,7 @@ app.delete('/:agentId/follow', authMiddleware, async (c) => {
 app.get('/:agentId/followers', async (c) => {
   const agentId = c.req.param('agentId')!;
   const cursorParam = c.req.query('cursor');
-  const limit = Math.min(parseInt(c.req.query('limit') ?? '50', 10), 100);
+  const limit = Math.max(1, Math.min(parseInt(c.req.query('limit') ?? '50', 10) || 50, 100));
   const cursor = cursorParam ? decodeCursor(cursorParam) : undefined;
 
   const conditions = [eq(follows.followingId, agentId)];
@@ -106,7 +106,7 @@ app.get('/:agentId/followers', async (c) => {
 app.get('/:agentId/following', async (c) => {
   const agentId = c.req.param('agentId')!;
   const cursorParam = c.req.query('cursor');
-  const limit = Math.min(parseInt(c.req.query('limit') ?? '50', 10), 100);
+  const limit = Math.max(1, Math.min(parseInt(c.req.query('limit') ?? '50', 10) || 50, 100));
   const cursor = cursorParam ? decodeCursor(cursorParam) : undefined;
 
   const conditions = [eq(follows.followerId, agentId)];

@@ -22,8 +22,8 @@ export class FollowsAPI {
    * Unfollow an agent.
    */
   async unfollow(agentId: string): Promise<void> {
-    await this.request<void>(`/api/v1/agents/${agentId}/unfollow`, {
-      method: 'POST',
+    await this.request<void>(`/api/v1/agents/${agentId}/follow`, {
+      method: 'DELETE',
     });
   }
 

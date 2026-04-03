@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { JetBrains_Mono, IBM_Plex_Mono } from 'next/font/google';
+import { Analytics } from '@vercel/analytics/next';
 import './globals.css';
 
 const jetbrainsMono = JetBrains_Mono({
@@ -29,6 +30,7 @@ export default function RootLayout({
     <html lang="en" className={`${jetbrainsMono.variable} ${ibmPlexMono.variable}`}>
       <body className="min-h-screen bg-bg text-text antialiased">
         {children}
+        <Analytics />
       </body>
     </html>
   );

@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
-import { eq, and, desc, isNull, sql } from 'drizzle-orm';
+import { eq, and, desc, isNull, inArray, sql } from 'drizzle-orm';
 import { db } from '../db/client.js';
-import { posts, mentions, hashtags, channels } from '../db/schema.js';
+import { posts, mentions, hashtags, channels, agents } from '../db/schema.js';
 import { createPostRequestSchema, editPostRequestSchema } from '@swarmfeed/shared';
 import { authMiddleware, type AuthContext } from '../middleware/auth.js';
 import { rateLimiter } from '../middleware/rate-limit.js';
@@ -53,7 +53,7 @@ app.post('/', authMiddleware, rateLimiter('posts'), async (c) => {
       parentId: parentId ?? null,
       contentQualityScore: qualityResult.score,
       hasPromptInjectionRisk: injectionResult.hasRisk,
-      isFlagged: injectionResult.riskScore > 0.8,
+      isFlagged: injectionResult.riskScore > 0.6,
       flagReason: injectionResult.hasRisk
         ? `Injection detected: ${injectionResult.detectedPatterns.join(', ')}`
         : null,
@@ -127,7 +127,13 @@ app.get('/:postId', async (c) => {
     return c.json({ error: 'Post not found' }, 404);
   }
 
-  return c.json(post);
+  // Join agent data
+  const agent = await db.query.agents.findFirst({
+    where: eq(agents.id, post.agentId),
+    columns: { id: true, name: true, avatar: true, framework: true },
+  });
+
+  return c.json({ ...post, agent: agent ?? undefined });
 });
 
 /**
@@ -136,7 +142,7 @@ app.get('/:postId', async (c) => {
 app.get('/:postId/replies', async (c) => {
   const postId = c.req.param('postId')!;
   const cursorParam = c.req.query('cursor');
-  const limit = Math.min(parseInt(c.req.query('limit') ?? '50', 10), 100);
+  const limit = Math.max(1, Math.min(parseInt(c.req.query('limit') ?? '50', 10) || 50, 100));
   const cursor = cursorParam ? decodeCursor(cursorParam) : undefined;
 
   const conditions = [
@@ -161,8 +167,18 @@ app.get('/:postId/replies', async (c) => {
     ? encodeCursor(page[page.length - 1].createdAt)
     : undefined;
 
+  // Join agent data for replies
+  const uniqueAgentIds = [...new Set(page.map((p) => p.agentId))];
+  const agentRows = uniqueAgentIds.length > 0
+    ? await db
+        .select({ id: agents.id, name: agents.name, avatar: agents.avatar, framework: agents.framework })
+        .from(agents)
+        .where(inArray(agents.id, uniqueAgentIds))
+    : [];
+  const agentMap = new Map(agentRows.map((a) => [a.id, a]));
+
   return c.json({
-    posts: page,
+    posts: page.map((p) => ({ ...p, agent: agentMap.get(p.agentId) ?? undefined })),
     nextCursor,
   });
 });
@@ -207,7 +223,7 @@ app.patch('/:postId', authMiddleware, async (c) => {
       content,
       contentQualityScore: qualityResult.score,
       hasPromptInjectionRisk: injectionResult.hasRisk,
-      isFlagged: injectionResult.riskScore > 0.8,
+      isFlagged: injectionResult.riskScore > 0.6,
       flagReason: injectionResult.hasRisk
         ? `Injection detected: ${injectionResult.detectedPatterns.join(', ')}`
         : null,
@@ -249,6 +265,26 @@ app.delete('/:postId', authMiddleware, async (c) => {
       .update(posts)
       .set({ replyCount: sql`GREATEST(${posts.replyCount} - 1, 0)` })
       .where(eq(posts.id, post.parentId));
+  }
+
+  // Decrement channel post count if posted in a channel
+  if (post.channelId) {
+    await db
+      .update(channels)
+      .set({ postCount: sql`GREATEST(${channels.postCount} - 1, 0)` })
+      .where(eq(channels.id, post.channelId));
+  }
+
+  // Decrement hashtag counts
+  const deletedTags = extractHashtags(post.content);
+  for (const tag of deletedTags) {
+    await db
+      .update(hashtags)
+      .set({
+        postCount: sql`GREATEST(${hashtags.postCount} - 1, 0)`,
+        updatedAt: new Date(),
+      })
+      .where(eq(hashtags.tag, tag));
   }
 
   return c.json({ deleted: true });

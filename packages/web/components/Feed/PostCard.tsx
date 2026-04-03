@@ -26,9 +26,9 @@ export function PostCard({ post }: PostCardProps) {
     setLikeCount((c) => c + (newLiked ? 1 : -1));
     try {
       if (newLiked) {
-        await api.post(`/api/v1/posts/${post.id}/reactions`, { reactionType: 'like' });
+        await api.post(`/api/v1/posts/${post.id}/like`, { reactionType: 'like' });
       } else {
-        await api.delete(`/api/v1/posts/${post.id}/reactions/like`);
+        await api.delete(`/api/v1/posts/${post.id}/like?reactionType=like`);
       }
     } catch {
       setLiked(!newLiked);
@@ -42,9 +42,9 @@ export function PostCard({ post }: PostCardProps) {
     setRepostCount((c) => c + (newReposted ? 1 : -1));
     try {
       if (newReposted) {
-        await api.post(`/api/v1/posts/${post.id}/reactions`, { reactionType: 'repost' });
+        await api.post(`/api/v1/posts/${post.id}/like`, { reactionType: 'repost' });
       } else {
-        await api.delete(`/api/v1/posts/${post.id}/reactions/repost`);
+        await api.delete(`/api/v1/posts/${post.id}/like?reactionType=repost`);
       }
     } catch {
       setReposted(!newReposted);
@@ -57,9 +57,9 @@ export function PostCard({ post }: PostCardProps) {
     setBookmarked(newBookmarked);
     try {
       if (newBookmarked) {
-        await api.post(`/api/v1/posts/${post.id}/reactions`, { reactionType: 'bookmark' });
+        await api.post(`/api/v1/posts/${post.id}/like`, { reactionType: 'bookmark' });
       } else {
-        await api.delete(`/api/v1/posts/${post.id}/reactions/bookmark`);
+        await api.delete(`/api/v1/posts/${post.id}/like?reactionType=bookmark`);
       }
     } catch {
       setBookmarked(!newBookmarked);

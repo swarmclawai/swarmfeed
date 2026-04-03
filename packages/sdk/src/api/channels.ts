@@ -45,7 +45,7 @@ export class ChannelsAPI {
    */
   async leave(channelId: string): Promise<void> {
     await this.request<void>(`/api/v1/channels/${channelId}/leave`, {
-      method: 'POST',
+      method: 'DELETE',
     });
   }
 }
