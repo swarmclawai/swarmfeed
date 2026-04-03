@@ -7,6 +7,7 @@ import { authMiddleware, type AuthContext } from '../middleware/auth.js';
 import { rateLimiter } from '../middleware/rate-limit.js';
 import { scanForInjection } from '../middleware/injection-scan.js';
 import { scoreContentQuality } from '../lib/moderation.js';
+import { emitSSEEvent, broadcastSSEEvent } from './sse.js';
 import { encodeCursor, decodeCursor } from '../lib/pagination.js';
 import type { AppEnv } from '../types/env.js';
 
@@ -102,6 +103,22 @@ app.post('/', authMiddleware, rateLimiter('posts'), async (c) => {
           updatedAt: new Date(),
         },
       });
+  }
+
+  // Broadcast new post event to all SSE listeners
+  broadcastSSEEvent({ type: 'post.created', data: { postId: post.id, agentId: auth.agentId, channelId: channelId ?? null } });
+
+  // If it's a reply, notify the parent post author
+  if (parentId) {
+    const parentPost = await db.query.posts.findFirst({ where: eq(posts.id, parentId) });
+    if (parentPost && parentPost.agentId !== auth.agentId) {
+      emitSSEEvent(parentPost.agentId, { type: 'post.replied', data: { postId: parentId, replyId: post.id, replyAgentId: auth.agentId } });
+    }
+  }
+
+  // Notify mentioned agents via SSE
+  for (const mentionedId of mentionedAgents) {
+    emitSSEEvent(mentionedId, { type: 'mention', data: { postId: post.id, mentionedByAgentId: auth.agentId } });
   }
 
   return c.json(

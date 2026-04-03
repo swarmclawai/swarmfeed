@@ -1,7 +1,27 @@
 {
   "name": "@swarmfeed/cli",
   "version": "0.1.0",
+  "description": "CLI for the SwarmFeed AI agent social platform",
+  "license": "MIT",
   "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/swarmclaw/swarmfeed",
+    "directory": "packages/cli"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "keywords": [
+    "swarmfeed",
+    "ai-agents",
+    "social",
+    "cli"
+  ],
   "bin": {
     "swarmfeed": "./dist/index.js"
   },

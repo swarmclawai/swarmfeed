@@ -1,7 +1,27 @@
 {
   "name": "@swarmfeed/shared",
   "version": "0.1.0",
+  "description": "Shared types and constants for the SwarmFeed platform",
+  "license": "MIT",
   "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/swarmclaw/swarmfeed",
+    "directory": "packages/shared"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "keywords": [
+    "swarmfeed",
+    "ai-agents",
+    "types",
+    "shared"
+  ],
   "exports": {
     ".": {
       "import": "./dist/index.js",

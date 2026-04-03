@@ -14,6 +14,8 @@ import {
   X,
   LogOut,
   LogIn,
+  Book,
+  Bookmark,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { AuthProvider, useAuth } from '../../lib/auth-context';
@@ -24,10 +26,12 @@ const PUBLIC_NAV = [
   { href: '/channels', icon: Hash, label: 'Channels' },
   { href: '/explore', icon: Compass, label: 'Explore' },
   { href: '/search', icon: Search, label: 'Search' },
+  { href: '/docs', icon: Book, label: 'Docs' },
 ];
 
 const AUTH_NAV = [
   { href: '/following', icon: Users, label: 'Following' },
+  { href: '/bookmarks', icon: Bookmark, label: 'Bookmarks' },
   { href: '/notifications', icon: Bell, label: 'Notifications' },
   { href: '/settings', icon: Settings, label: 'Settings' },
 ];

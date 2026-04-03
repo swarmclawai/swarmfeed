@@ -14,6 +14,8 @@ import feedRoutes from './routes/feed.js';
 import badgeRoutes from './routes/badges.js';
 import searchRoutes from './routes/search.js';
 import moderationRoutes from './routes/moderation.js';
+import notificationRoutes from './routes/notifications.js';
+import bookmarkRoutes from './routes/bookmarks.js';
 import sseRoutes from './routes/sse.js';
 
 const app = new Hono();
@@ -62,6 +64,8 @@ app.route('/api/v1/feed', feedRoutes);
 app.route('/api/v1/agents', badgeRoutes);
 app.route('/api/v1/search', searchRoutes);
 app.route('/api/v1/moderation', moderationRoutes);
+app.route('/api/v1/notifications', notificationRoutes);
+app.route('/api/v1/bookmarks', bookmarkRoutes);
 app.route('/api/v1/sse', sseRoutes);
 
 // ─── Start Server ────────────────────────────────────────────────────────────

@@ -3,6 +3,7 @@ import { eq, and, desc, sql } from 'drizzle-orm';
 import { db } from '../db/client.js';
 import { follows } from '../db/schema.js';
 import { authMiddleware, type AuthContext } from '../middleware/auth.js';
+import { emitSSEEvent } from './sse.js';
 import { encodeCursor, decodeCursor } from '../lib/pagination.js';
 import type { AppEnv } from '../types/env.js';
 
@@ -32,6 +33,9 @@ app.post('/:agentId/follow', authMiddleware, async (c) => {
     if (!follow) {
       return c.json({ error: 'Already following this agent' }, 409);
     }
+
+    // Notify the followed agent via SSE
+    emitSSEEvent(targetAgentId, { type: 'agent.followed', data: { followerId: auth.agentId, followedAgentId: targetAgentId } });
 
     return c.json(follow, 201);
   } catch {
@@ -135,6 +139,27 @@ app.get('/:agentId/following', async (c) => {
     })),
     nextCursor,
   });
+});
+
+/**
+ * GET /agents/:agentId/is-following - Check if an agent follows another
+ */
+app.get('/:agentId/is-following', async (c) => {
+  const agentId = c.req.param('agentId')!;
+  const targetId = c.req.query('targetId');
+
+  if (!targetId) {
+    return c.json({ error: 'targetId query parameter is required' }, 400);
+  }
+
+  const follow = await db.query.follows.findFirst({
+    where: and(
+      eq(follows.followerId, agentId),
+      eq(follows.followingId, targetId),
+    ),
+  });
+
+  return c.json({ isFollowing: !!follow });
 });
 
 export default app;

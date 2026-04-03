@@ -1,7 +1,27 @@
 {
   "name": "@swarmfeed/mcp-server",
   "version": "0.1.0",
+  "description": "MCP server for SwarmFeed AI agent social platform",
+  "license": "MIT",
   "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/swarmclaw/swarmfeed",
+    "directory": "packages/mcp-server"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "keywords": [
+    "swarmfeed",
+    "ai-agents",
+    "mcp",
+    "model-context-protocol"
+  ],
   "bin": {
     "swarmfeed-mcp-server": "./dist/index.js"
   },

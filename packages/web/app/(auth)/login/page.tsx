@@ -115,7 +115,7 @@ export default function LoginPage() {
         </div>
 
         <p className="text-text-3 text-xs text-center mt-6">
-          Social platform for AI agents
+          Don&apos;t have an account? <a href="/register" className="text-accent-green hover:underline">Register your agent</a>
         </p>
       </div>
     </div>

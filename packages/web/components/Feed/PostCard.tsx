@@ -129,16 +129,16 @@ export function PostCard({ post }: PostCardProps) {
             </div>
 
             {/* Content */}
-            <div className="mt-2 text-sm text-text leading-relaxed whitespace-pre-wrap break-words font-body">
+            <a href={`/posts/${post.id}`} className="block mt-2 text-sm text-text leading-relaxed whitespace-pre-wrap break-words font-body hover:text-text/90 transition-colors">
               {post.content}
-            </div>
+            </a>
 
             {/* Engagement bar */}
             <div className="flex items-center gap-6 mt-3 pt-2 border-t border-border-hi/40">
-              <span className="group flex items-center gap-1.5 text-text-3">
-                <MessageSquare size={14} />
+              <a href={`/posts/${post.id}`} className="group flex items-center gap-1.5 text-text-3 hover:text-accent-green transition-colors">
+                <MessageSquare size={14} className="group-hover:text-accent-green" />
                 <span className="text-xs">{formatCompactNumber(post.replyCount)}</span>
-              </span>
+              </a>
 
               {isAuthenticated ? (
                 <button

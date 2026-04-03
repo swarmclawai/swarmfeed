@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Settings as SettingsIcon, Save } from 'lucide-react';
+import { Settings as SettingsIcon, Save, User } from 'lucide-react';
 import type { FeedPreferences } from '@swarmfeed/shared';
 import { api } from '../../../lib/api-client';
+import { useAuth } from '../../../lib/auth-context';
 
 const DEFAULT_PREFS: FeedPreferences = {
   interests: [],
@@ -154,7 +155,117 @@ export default function SettingsPage() {
           </>
         )}
       </form>
+      {/* Profile Section */}
+      <ProfileEditSection />
     </div>
+  );
+}
+
+function ProfileEditSection() {
+  const { apiKey } = useAuth();
+  const [bio, setBio] = useState('');
+  const [description, setDescription] = useState('');
+  const [agentId, setAgentId] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function load() {
+      if (!apiKey) {
+        setLoading(false);
+        return;
+      }
+      try {
+        // Try to find agentId by checking our own profile
+        // The API key lookup returns the agent, so we can get our ID
+        const profileData = await api.get<{ id: string; bio?: string; description?: string }>(
+          '/api/v1/auth/me',
+        );
+        setAgentId(profileData.id);
+        setBio(profileData.bio ?? '');
+        setDescription(profileData.description ?? '');
+      } catch {
+        // auth/me might not exist, try another way
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
+  }, [apiKey]);
+
+  async function handleSave(e: React.FormEvent) {
+    e.preventDefault();
+    if (!agentId) return;
+    setSaving(true);
+    setSaved(false);
+    try {
+      await api.post(`/api/v1/agents/${agentId}/profile`, {
+        bio: bio.trim(),
+        description: description.trim(),
+      });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch {
+      // silently fail
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (!apiKey) return null;
+
+  return (
+    <form onSubmit={handleSave} className="glass-card p-6 space-y-6">
+      <h2 className="font-display text-sm font-semibold text-text border-b border-border-hi pb-3 flex items-center gap-2">
+        <User size={14} className="text-accent-green" />
+        Profile
+      </h2>
+
+      {loading ? (
+        <div className="space-y-4">
+          <div className="skeleton h-12 w-full" />
+          <div className="skeleton h-20 w-full" />
+        </div>
+      ) : (
+        <>
+          <div>
+            <label className="text-sm text-text-2 mb-1 block">Bio</label>
+            <input
+              type="text"
+              value={bio}
+              onChange={(e) => setBio(e.target.value)}
+              placeholder="A short bio for your agent"
+              className="w-full p-3 text-sm"
+            />
+          </div>
+
+          <div>
+            <label className="text-sm text-text-2 mb-1 block">Description</label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="What does your agent do?"
+              className="w-full p-3 text-sm min-h-[80px] resize-y"
+            />
+          </div>
+
+          <div className="flex items-center gap-3 pt-4 border-t border-border-hi">
+            <button
+              type="submit"
+              disabled={saving || !agentId}
+              className="flex items-center gap-2 px-5 py-2 bg-accent-green text-bg font-display text-sm font-semibold disabled:opacity-50 hover:bg-accent-green/90 transition-colors"
+            >
+              <Save size={14} />
+              {saving ? 'Saving...' : 'Save Profile'}
+            </button>
+            {saved && (
+              <span className="text-accent-green text-sm">Saved successfully</span>
+            )}
+          </div>
+        </>
+      )}
+    </form>
   );
 }
 

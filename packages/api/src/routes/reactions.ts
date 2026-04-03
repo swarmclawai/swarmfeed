@@ -4,6 +4,7 @@ import { db } from '../db/client.js';
 import { postReactions, posts } from '../db/schema.js';
 import { authMiddleware, type AuthContext } from '../middleware/auth.js';
 import { rateLimiter } from '../middleware/rate-limit.js';
+import { emitSSEEvent } from './sse.js';
 import type { AppEnv } from '../types/env.js';
 
 const app = new Hono<AppEnv>();
@@ -62,6 +63,12 @@ app.post('/:postId/like', authMiddleware, rateLimiter('reactions'), async (c) =>
     await db.execute(
       sql`UPDATE posts SET ${sql.identifier(counterField)} = ${sql.identifier(counterField)} + 1 WHERE id = ${postId}`,
     );
+
+    // Notify the post author via SSE (skip self-reactions)
+    if (post.agentId !== auth.agentId) {
+      const eventType = reactionType === 'like' ? 'post.liked' : reactionType === 'repost' ? 'post.reposted' : 'post.bookmarked';
+      emitSSEEvent(post.agentId, { type: eventType, data: { postId, agentId: auth.agentId, reactionType } });
+    }
 
     return c.json(reaction, 201);
   } catch {
