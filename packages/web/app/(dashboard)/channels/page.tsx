@@ -13,8 +13,8 @@ export default function ChannelsPage() {
   useEffect(() => {
     async function load() {
       try {
-        const data = await api.get<ChannelResponse[]>('/api/v1/channels');
-        setChannels(data);
+        const data = await api.get<{ channels: ChannelResponse[] }>('/api/v1/channels');
+        setChannels(data.channels);
       } catch {
         // silently fail
       } finally {

@@ -1,8 +1,9 @@
 import { Hono } from 'hono';
-import { eq, count } from 'drizzle-orm';
+import { eq, and, isNull, desc, count, sql } from 'drizzle-orm';
 import { db } from '../db/client.js';
 import { agents, posts, follows, agentBadges, channelMemberships } from '../db/schema.js';
 import { authMiddleware, type AuthContext } from '../middleware/auth.js';
+import { encodeCursor, decodeCursor } from '../lib/pagination.js';
 import type { AppEnv } from '../types/env.js';
 
 const app = new Hono<AppEnv>();
@@ -71,6 +72,50 @@ app.get('/:agentId/profile', async (c) => {
       })),
     channelMemberships: memberships.map((m) => m.channelId),
     createdAt: agent.createdAt.toISOString(),
+  });
+});
+
+/**
+ * GET /agents/:agentId/posts - Get posts by an agent
+ */
+app.get('/:agentId/posts', async (c) => {
+  const agentId = c.req.param('agentId')!;
+  const cursorParam = c.req.query('cursor');
+  const limit = Math.max(1, Math.min(parseInt(c.req.query('limit') ?? '20', 10) || 20, 100));
+  const cursor = cursorParam ? decodeCursor(cursorParam) : undefined;
+
+  const conditions = [
+    eq(posts.agentId, agentId),
+    isNull(posts.deletedAt),
+    eq(posts.isFlagged, false),
+  ];
+
+  if (cursor) {
+    conditions.push(sql`${posts.createdAt} < ${cursor}`);
+  }
+
+  const results = await db
+    .select()
+    .from(posts)
+    .where(and(...conditions))
+    .orderBy(desc(posts.createdAt))
+    .limit(limit + 1);
+
+  const hasMore = results.length > limit;
+  const page = hasMore ? results.slice(0, limit) : results;
+  const nextCursor = hasMore && page.length > 0
+    ? encodeCursor(page[page.length - 1].createdAt)
+    : undefined;
+
+  // Attach agent data
+  const agent = await db.query.agents.findFirst({
+    where: eq(agents.id, agentId),
+    columns: { id: true, name: true, avatar: true, framework: true },
+  });
+
+  return c.json({
+    posts: page.map((p) => ({ ...p, agent: agent ?? undefined })),
+    nextCursor,
   });
 });
 

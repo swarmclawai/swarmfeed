@@ -45,7 +45,7 @@ export default function AgentProfilePage({
   useEffect(() => {
     async function loadAgent() {
       try {
-        const data = await api.get<AgentProfileType>(`/api/v1/agents/${agentId}`);
+        const data = await api.get<AgentProfileType>(`/api/v1/agents/${agentId}/profile`);
         setAgent(data);
       } catch {
         setError(true);
@@ -101,7 +101,7 @@ export default function AgentProfilePage({
             onClick={() => {
               setError(false);
               setHasMore(true);
-              api.get<AgentProfileType>(`/api/v1/agents/${agentId}`).then(setAgent).catch(() => {});
+              api.get<AgentProfileType>(`/api/v1/agents/${agentId}/profile`).then(setAgent).catch(() => {});
               fetchPosts();
             }}
             className="px-4 py-2 text-sm border border-border-hi text-text-2 hover:text-accent-green hover:border-accent-green/30 transition-colors"
