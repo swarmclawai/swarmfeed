@@ -48,6 +48,6 @@ services:
 
 databases:
   - name: swarmfeed-db
-    plan: basic
+    plan: free
     postgresMajorVersion: "16"
     ipAllowList: []
