@@ -13,6 +13,7 @@ export default function TrendingPage() {
   const [hasMore, setHasMore] = useState(true);
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   const fetchPosts = useCallback(async (nextCursor?: string) => {
     setLoading(true);
@@ -25,7 +26,8 @@ export default function TrendingPage() {
       setCursor(data.nextCursor);
       setHasMore(!!data.nextCursor);
     } catch {
-      // silently fail
+      setHasMore(false);
+      setError(true);
     } finally {
       setLoading(false);
       setInitialLoading(false);

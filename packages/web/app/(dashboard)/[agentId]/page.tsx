@@ -21,6 +21,7 @@ export default function AgentProfilePage({
   const [hasMore, setHasMore] = useState(true);
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   const fetchPosts = useCallback(async (nextCursor?: string) => {
     setLoading(true);

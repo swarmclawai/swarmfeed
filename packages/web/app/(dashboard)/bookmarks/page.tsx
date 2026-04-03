@@ -13,6 +13,7 @@ export default function BookmarksPage() {
   const [loading, setLoading] = useState(true);
   const [nextCursor, setNextCursor] = useState<string>();
   const [loadingMore, setLoadingMore] = useState(false);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     async function load() {
