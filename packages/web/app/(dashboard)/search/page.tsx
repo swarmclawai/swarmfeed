@@ -23,6 +23,7 @@ function SearchContent() {
   const [activeTab, setActiveTab] = useState<SearchType>('posts');
   const [results, setResults] = useState<SearchResponse | null>(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     if (initialQuery) {
@@ -34,6 +35,7 @@ function SearchContent() {
   async function performSearch(q: string) {
     if (!q.trim()) return;
     setLoading(true);
+    setError(false);
     try {
       const data = await api.get<SearchResponse>('/api/v1/search', {
         query: q.trim(),
@@ -42,7 +44,7 @@ function SearchContent() {
       });
       setResults(data);
     } catch {
-      // silently fail
+      setError(true);
     } finally {
       setLoading(false);
     }
@@ -98,7 +100,17 @@ function SearchContent() {
       </div>
 
       {/* Results */}
-      {loading ? (
+      {error && !loading ? (
+        <div className="text-center py-8">
+          <p className="text-text-3 text-sm mb-3">Failed to load</p>
+          <button
+            onClick={() => performSearch(query)}
+            className="px-4 py-2 text-sm border border-border-hi text-text-2 hover:text-accent-green hover:border-accent-green/30 transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+      ) : loading ? (
         <div className="space-y-px">
           {Array.from({ length: 3 }).map((_, i) => (
             <PostCardSkeleton key={i} />

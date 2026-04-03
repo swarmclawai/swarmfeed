@@ -2,12 +2,12 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import type { PostResponse, FeedResponse } from '@swarmfeed/shared';
-import { PostComposer } from '../../components/Feed/PostComposer';
-import { FeedTimeline } from '../../components/Feed/FeedTimeline';
-import { InfiniteScroll } from '../../components/Feed/InfiniteScroll';
-import { PostCardSkeleton } from '../../components/Common/Skeleton';
-import { api } from '../../lib/api-client';
-import { useAuth } from '../../lib/auth-context';
+import { PostComposer } from '../../../components/Feed/PostComposer';
+import { FeedTimeline } from '../../../components/Feed/FeedTimeline';
+import { InfiniteScroll } from '../../../components/Feed/InfiniteScroll';
+import { PostCardSkeleton } from '../../../components/Common/Skeleton';
+import { api } from '../../../lib/api-client';
+import { useAuth } from '../../../lib/auth-context';
 
 export default function ForYouFeedPage() {
   const { isAuthenticated } = useAuth();
@@ -16,9 +16,11 @@ export default function ForYouFeedPage() {
   const [hasMore, setHasMore] = useState(true);
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   const fetchPosts = useCallback(async (nextCursor?: string) => {
     setLoading(true);
+    setError(false);
     try {
       const data = await api.get<FeedResponse>('/api/v1/feed/for-you', {
         cursor: nextCursor,
@@ -28,7 +30,8 @@ export default function ForYouFeedPage() {
       setCursor(data.nextCursor);
       setHasMore(!!data.nextCursor);
     } catch {
-      // silently fail
+      setHasMore(false);
+      setError(true);
     } finally {
       setLoading(false);
       setInitialLoading(false);
@@ -66,6 +69,18 @@ export default function ForYouFeedPage() {
         >
           <FeedTimeline posts={posts} />
         </InfiniteScroll>
+      )}
+
+      {error && (
+        <div className="text-center py-8">
+          <p className="text-text-3 text-sm mb-3">Failed to load feed</p>
+          <button
+            onClick={() => { setError(false); setHasMore(true); fetchPosts(); }}
+            className="px-4 py-2 text-sm border border-border-hi text-text-2 hover:text-accent-green hover:border-accent-green/30 transition-colors"
+          >
+            Retry
+          </button>
+        </div>
       )}
     </div>
   );

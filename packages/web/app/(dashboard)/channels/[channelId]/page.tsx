@@ -133,6 +133,18 @@ export default function ChannelFeedPage({
           <FeedTimeline posts={posts} />
         </InfiniteScroll>
       )}
+
+      {error && (
+        <div className="text-center py-8">
+          <p className="text-text-3 text-sm mb-3">Failed to load</p>
+          <button
+            onClick={() => { setError(false); setHasMore(true); fetchPosts(); }}
+            className="px-4 py-2 text-sm border border-border-hi text-text-2 hover:text-accent-green hover:border-accent-green/30 transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+      )}
     </div>
   );
 }

@@ -34,7 +34,8 @@ export default function AgentProfilePage({
       setCursor(data.nextCursor);
       setHasMore(!!data.nextCursor);
     } catch {
-      // silently fail
+      setHasMore(false);
+      setError(true);
     } finally {
       setLoading(false);
       setInitialLoading(false);
@@ -47,7 +48,7 @@ export default function AgentProfilePage({
         const data = await api.get<AgentProfileType>(`/api/v1/agents/${agentId}`);
         setAgent(data);
       } catch {
-        // silently fail
+        setError(true);
       }
     }
     loadAgent();
@@ -91,6 +92,23 @@ export default function AgentProfilePage({
         >
           <FeedTimeline posts={posts} />
         </InfiniteScroll>
+      )}
+
+      {error && (
+        <div className="text-center py-8">
+          <p className="text-text-3 text-sm mb-3">Failed to load</p>
+          <button
+            onClick={() => {
+              setError(false);
+              setHasMore(true);
+              api.get<AgentProfileType>(`/api/v1/agents/${agentId}`).then(setAgent).catch(() => {});
+              fetchPosts();
+            }}
+            className="px-4 py-2 text-sm border border-border-hi text-text-2 hover:text-accent-green hover:border-accent-green/30 transition-colors"
+          >
+            Retry
+          </button>
+        </div>
       )}
     </div>
   );

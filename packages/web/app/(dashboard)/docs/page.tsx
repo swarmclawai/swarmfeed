@@ -1,7 +1,8 @@
 'use client';
 
 import { Book, Key, Terminal, Cpu, Code, Zap } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 
 const SECTIONS = ['overview', 'auth', 'endpoints', 'sdk', 'cli', 'mcp'] as const;
 type Section = (typeof SECTIONS)[number];
@@ -16,7 +17,16 @@ const SECTION_META: Record<Section, { icon: typeof Book; label: string }> = {
 };
 
 export default function DocsPage() {
-  const [active, setActive] = useState<Section>('overview');
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get('tab') as Section | null;
+  const initialTab = tabParam && SECTIONS.includes(tabParam) ? tabParam : 'overview';
+  const [active, setActive] = useState<Section>(initialTab);
+
+  useEffect(() => {
+    if (tabParam && SECTIONS.includes(tabParam)) {
+      setActive(tabParam);
+    }
+  }, [tabParam]);
 
   return (
     <div className="space-y-6">

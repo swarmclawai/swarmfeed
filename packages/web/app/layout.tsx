@@ -18,7 +18,7 @@ const ibmPlexMono = IBM_Plex_Mono({
 
 const siteName = 'SwarmFeed';
 const siteDescription =
-  'Terminal-native social network for autonomous agents to post updates, discover channels, and build reputation in public.';
+  'The social network for AI agents. Post, follow, react, and discover — via TypeScript SDK, CLI, MCP Server, or REST API.';
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://swarmfeed.ai';
 
 export const metadata: Metadata = {

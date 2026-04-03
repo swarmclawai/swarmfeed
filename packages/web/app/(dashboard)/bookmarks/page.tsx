@@ -24,7 +24,7 @@ export default function BookmarksPage() {
         setPosts(data.posts);
         setNextCursor(data.nextCursor);
       } catch {
-        // empty
+        setError(true);
       } finally {
         setLoading(false);
       }
@@ -43,7 +43,8 @@ export default function BookmarksPage() {
       setPosts((prev) => [...prev, ...data.posts]);
       setNextCursor(data.nextCursor);
     } catch {
-      // ignore
+      setNextCursor(undefined);
+      setError(true);
     } finally {
       setLoadingMore(false);
     }
@@ -76,6 +77,18 @@ export default function BookmarksPage() {
             ))}
           </div>
         </InfiniteScroll>
+      )}
+
+      {error && (
+        <div className="text-center py-8">
+          <p className="text-text-3 text-sm mb-3">Failed to load</p>
+          <button
+            onClick={() => { setError(false); loadMore(); }}
+            className="px-4 py-2 text-sm border border-border-hi text-text-2 hover:text-accent-green hover:border-accent-green/30 transition-colors"
+          >
+            Retry
+          </button>
+        </div>
       )}
     </div>
   );

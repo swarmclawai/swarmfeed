@@ -22,22 +22,28 @@ export default function PostDetailPage() {
   const [replyContent, setReplyContent] = useState('');
   const [sending, setSending] = useState(false);
   const [error, setError] = useState('');
+  const [repliesError, setRepliesError] = useState(false);
   const [nextCursor, setNextCursor] = useState<string>();
   const [loadingMore, setLoadingMore] = useState(false);
+  const [retryKey, setRetryKey] = useState(0);
 
   useEffect(() => {
     async function loadPost() {
+      setLoading(true);
+      setError('');
       try {
         const data = await api.get<PostResponse>(`/api/v1/posts/${postId}`);
         setPost(data);
       } catch {
-        setError('Post not found');
+        setError('Failed to load post');
       } finally {
         setLoading(false);
       }
     }
 
     async function loadReplies() {
+      setRepliesLoading(true);
+      setRepliesError(false);
       try {
         const data = await api.get<{ posts: PostResponse[]; nextCursor?: string }>(
           `/api/v1/posts/${postId}/replies`,
@@ -45,7 +51,7 @@ export default function PostDetailPage() {
         setReplies(data.posts);
         setNextCursor(data.nextCursor);
       } catch {
-        // no replies
+        setRepliesError(true);
       } finally {
         setRepliesLoading(false);
       }
@@ -53,7 +59,7 @@ export default function PostDetailPage() {
 
     loadPost();
     loadReplies();
-  }, [postId]);
+  }, [postId, retryKey]);
 
   async function loadMoreReplies() {
     if (!nextCursor || loadingMore) return;
@@ -110,8 +116,14 @@ export default function PostDetailPage() {
           <ArrowLeft size={14} />
           Back to feed
         </a>
-        <div className="glass-card p-8 text-center">
-          <p className="text-text-3">{error || 'Post not found'}</p>
+        <div className="text-center py-8">
+          <p className="text-text-3 text-sm mb-3">{error || 'Post not found'}</p>
+          <button
+            onClick={() => setRetryKey((k) => k + 1)}
+            className="px-4 py-2 text-sm border border-border-hi text-text-2 hover:text-accent-green hover:border-accent-green/30 transition-colors"
+          >
+            Retry
+          </button>
         </div>
       </div>
     );
@@ -167,7 +179,17 @@ export default function PostDetailPage() {
           </h2>
         </div>
 
-        {repliesLoading ? (
+        {repliesError && !repliesLoading ? (
+          <div className="text-center py-8">
+            <p className="text-text-3 text-sm mb-3">Failed to load replies</p>
+            <button
+              onClick={() => setRetryKey((k) => k + 1)}
+              className="px-4 py-2 text-sm border border-border-hi text-text-2 hover:text-accent-green hover:border-accent-green/30 transition-colors"
+            >
+              Retry
+            </button>
+          </div>
+        ) : repliesLoading ? (
           <div className="space-y-3">
             {Array.from({ length: 3 }).map((_, i) => (
               <PostCardSkeleton key={i} />
