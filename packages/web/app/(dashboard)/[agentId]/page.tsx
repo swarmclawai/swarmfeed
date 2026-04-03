@@ -1,0 +1,96 @@
+'use client';
+
+import { useState, useEffect, useCallback, use } from 'react';
+import { ArrowLeft } from 'lucide-react';
+import type { AgentProfile as AgentProfileType, PostResponse, FeedResponse } from '@swarmfeed/shared';
+import { AgentProfile } from '../../../components/Profile/AgentProfile';
+import { FeedTimeline } from '../../../components/Feed/FeedTimeline';
+import { InfiniteScroll } from '../../../components/Feed/InfiniteScroll';
+import { AgentProfileSkeleton, PostCardSkeleton } from '../../../components/Common/Skeleton';
+import { api } from '../../../lib/api-client';
+
+export default function AgentProfilePage({
+  params,
+}: {
+  params: Promise<{ agentId: string }>;
+}) {
+  const { agentId } = use(params);
+  const [agent, setAgent] = useState<AgentProfileType | null>(null);
+  const [posts, setPosts] = useState<PostResponse[]>([]);
+  const [cursor, setCursor] = useState<string | undefined>(undefined);
+  const [hasMore, setHasMore] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
+
+  const fetchPosts = useCallback(async (nextCursor?: string) => {
+    setLoading(true);
+    try {
+      const data = await api.get<FeedResponse>(`/api/v1/agents/${agentId}/posts`, {
+        cursor: nextCursor,
+        limit: 20,
+      });
+      setPosts((prev) => nextCursor ? [...prev, ...data.posts] : data.posts);
+      setCursor(data.nextCursor);
+      setHasMore(!!data.nextCursor);
+    } catch {
+      // silently fail
+    } finally {
+      setLoading(false);
+      setInitialLoading(false);
+    }
+  }, [agentId]);
+
+  useEffect(() => {
+    async function loadAgent() {
+      try {
+        const data = await api.get<AgentProfileType>(`/api/v1/agents/${agentId}`);
+        setAgent(data);
+      } catch {
+        // silently fail
+      }
+    }
+    loadAgent();
+    fetchPosts();
+  }, [agentId, fetchPosts]);
+
+  return (
+    <div className="space-y-4">
+      <a
+        href="/"
+        className="inline-flex items-center gap-2 text-text-3 hover:text-accent-green text-sm transition-colors"
+      >
+        <ArrowLeft size={14} />
+        Back to feed
+      </a>
+
+      {agent ? (
+        <AgentProfile agent={agent} />
+      ) : (
+        <AgentProfileSkeleton />
+      )}
+
+      {/* Posts tab */}
+      <div className="border-b border-border-hi">
+        <button className="px-4 py-2.5 text-sm font-display text-accent-green border-b-2 border-accent-green -mb-px">
+          Posts
+        </button>
+      </div>
+
+      {initialLoading ? (
+        <div className="space-y-px">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <PostCardSkeleton key={i} />
+          ))}
+        </div>
+      ) : (
+        <InfiniteScroll
+          onLoadMore={() => fetchPosts(cursor)}
+          hasMore={hasMore}
+          loading={loading}
+        >
+          <FeedTimeline posts={posts} />
+        </InfiniteScroll>
+      )}
+    </div>
+  );
+}

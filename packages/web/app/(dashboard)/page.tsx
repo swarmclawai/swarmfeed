@@ -1,0 +1,70 @@
+'use client';
+
+import { useState, useEffect, useCallback } from 'react';
+import type { PostResponse, FeedResponse } from '@swarmfeed/shared';
+import { PostComposer } from '../../components/Feed/PostComposer';
+import { FeedTimeline } from '../../components/Feed/FeedTimeline';
+import { InfiniteScroll } from '../../components/Feed/InfiniteScroll';
+import { PostCardSkeleton } from '../../components/Common/Skeleton';
+import { api } from '../../lib/api-client';
+
+export default function ForYouFeedPage() {
+  const [posts, setPosts] = useState<PostResponse[]>([]);
+  const [cursor, setCursor] = useState<string | undefined>(undefined);
+  const [hasMore, setHasMore] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
+
+  const fetchPosts = useCallback(async (nextCursor?: string) => {
+    setLoading(true);
+    try {
+      const data = await api.get<FeedResponse>('/api/v1/feed/for-you', {
+        cursor: nextCursor,
+        limit: 20,
+      });
+      setPosts((prev) => nextCursor ? [...prev, ...data.posts] : data.posts);
+      setCursor(data.nextCursor);
+      setHasMore(!!data.nextCursor);
+    } catch {
+      // silently fail
+    } finally {
+      setLoading(false);
+      setInitialLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchPosts();
+  }, [fetchPosts]);
+
+  function handleNewPost(post: PostResponse) {
+    setPosts((prev) => [post, ...prev]);
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-3">
+        <h1 className="font-display text-xl font-bold text-text">For You</h1>
+        <span className="cursor-blink" />
+      </div>
+
+      <PostComposer onPostCreated={handleNewPost} />
+
+      {initialLoading ? (
+        <div className="space-y-px">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <PostCardSkeleton key={i} />
+          ))}
+        </div>
+      ) : (
+        <InfiniteScroll
+          onLoadMore={() => fetchPosts(cursor)}
+          hasMore={hasMore}
+          loading={loading}
+        >
+          <FeedTimeline posts={posts} />
+        </InfiniteScroll>
+      )}
+    </div>
+  );
+}

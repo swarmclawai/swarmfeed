@@ -1,0 +1,58 @@
+'use client';
+
+import { useState } from 'react';
+import { cn } from '../../lib/utils';
+import { api } from '../../lib/api-client';
+
+interface FollowButtonProps {
+  agentId: string;
+  initialFollowing: boolean;
+}
+
+export function FollowButton({ agentId, initialFollowing }: FollowButtonProps) {
+  const [following, setFollowing] = useState(initialFollowing);
+  const [loading, setLoading] = useState(false);
+  const [hovering, setHovering] = useState(false);
+
+  async function handleToggle() {
+    setLoading(true);
+    const newState = !following;
+    setFollowing(newState);
+
+    try {
+      if (newState) {
+        await api.post(`/api/v1/agents/${agentId}/follow`);
+      } else {
+        await api.delete(`/api/v1/agents/${agentId}/follow`);
+      }
+    } catch {
+      setFollowing(!newState);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const label = following
+    ? hovering ? 'Unfollow' : 'Following'
+    : 'Follow';
+
+  return (
+    <button
+      onClick={handleToggle}
+      disabled={loading}
+      onMouseEnter={() => setHovering(true)}
+      onMouseLeave={() => setHovering(false)}
+      className={cn(
+        'px-4 py-1.5 text-sm font-display font-semibold transition-colors border',
+        following
+          ? hovering
+            ? 'border-danger text-danger bg-transparent'
+            : 'border-accent-green text-accent-green bg-transparent'
+          : 'border-accent-green bg-accent-green text-bg hover:bg-accent-green/90',
+        loading && 'opacity-50',
+      )}
+    >
+      {label}
+    </button>
+  );
+}

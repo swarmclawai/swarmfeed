@@ -1,0 +1,143 @@
+@import "tailwindcss";
+
+@theme inline {
+  --font-display: var(--font-jetbrains-mono), 'SF Mono', monospace;
+  --font-body: var(--font-ibm-plex-mono), 'SF Mono', monospace;
+  --font-mono: var(--font-jetbrains-mono), 'SF Mono', monospace;
+  --font-sans: var(--font-ibm-plex-mono), 'SF Mono', monospace;
+
+  /* Terminal palette */
+  --color-bg: #0A0A0A;
+  --color-raised: #111111;
+  --color-surface: #111111;
+  --color-surface-2: #151515;
+  --color-surface-3: #1A1A1A;
+  --color-border-hi: #333333;
+  --color-border-focus: rgba(0, 255, 136, 0.5);
+  --color-text: #E0E0E0;
+  --color-text-2: #888888;
+  --color-text-3: #555555;
+  --color-accent-green: #00FF88;
+  --color-accent-soft: rgba(0, 255, 136, 0.15);
+  --color-accent-glow: rgba(0, 255, 136, 0.18);
+  --color-accent-bright: #00FF88;
+  --color-success: #00FF88;
+  --color-danger: #FF4444;
+  --color-glass: rgba(10, 10, 10, 0.75);
+  --color-glass-border: #333333;
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+*,
+*::before,
+*::after {
+  border-radius: 0 !important;
+}
+
+body {
+  background: #0A0A0A;
+  color: #E0E0E0;
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0A0A0A;
+}
+::-webkit-scrollbar-thumb {
+  background: #333333;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #555555;
+}
+
+/* Glow effects */
+.glow-green {
+  box-shadow: 0 0 60px rgba(0, 255, 136, 0.12), 0 0 120px rgba(0, 255, 136, 0.04);
+}
+.glow-green-sm {
+  box-shadow: 0 0 30px rgba(0, 255, 136, 0.10);
+}
+
+/* Gradient text */
+.gradient-text {
+  background: linear-gradient(135deg, #00FF88 0%, #00CC6A 50%, #E0E0E0 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Glass card */
+.glass-card {
+  background: #111111;
+  border: 1px solid #333333;
+  backdrop-filter: blur(10px);
+}
+
+/* Terminal effects */
+.cursor-blink::after {
+  content: "";
+  display: inline-block;
+  width: 0.6em;
+  height: 1.1em;
+  background: #00FF88;
+  margin-left: 0.15em;
+  vertical-align: text-bottom;
+  animation: blink-cursor 1s step-end infinite;
+}
+@keyframes blink-cursor {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+/* Skeleton loading pulse */
+@keyframes skeleton-pulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.15; }
+}
+.skeleton {
+  background: #1A1A1A;
+  animation: skeleton-pulse 1.8s ease-in-out infinite;
+}
+
+/* Selection */
+::selection {
+  background: rgba(0, 255, 136, 0.25);
+  color: #E0E0E0;
+}
+
+/* Focus visible */
+:focus-visible {
+  outline: 1px solid rgba(0, 255, 136, 0.5);
+  outline-offset: 2px;
+}
+
+/* Input base styles */
+input,
+textarea,
+select {
+  background: #0A0A0A;
+  border: 1px solid #333333;
+  color: #E0E0E0;
+  font-family: var(--font-body);
+}
+input:focus,
+textarea:focus,
+select:focus {
+  border-color: rgba(0, 255, 136, 0.5);
+  outline: none;
+}
+input::placeholder,
+textarea::placeholder {
+  color: #555555;
+}
+
+/* Button reset */
+button {
+  font-family: var(--font-body);
+}

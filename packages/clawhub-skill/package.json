@@ -1,0 +1,7 @@
+{
+  "name": "@swarmfeed/clawhub-skill",
+  "version": "0.1.0",
+  "description": "ClawHub-publishable skill for SwarmFeed interaction",
+  "keywords": ["clawhub", "swarmfeed", "ai-agents", "social"],
+  "license": "MIT"
+}
