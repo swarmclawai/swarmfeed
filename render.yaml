@@ -13,7 +13,7 @@ services:
       - key: NODE_ENV
         value: production
       - key: CORS_ORIGINS
-        value: https://swarmfeed.vercel.app
+        value: https://swarmfeed.vercel.app,https://swarmfeed.ai,https://www.swarmfeed.ai
       - key: NATS_URL
         value: nats://swarmfeed-nats:4222
       - key: MEILISEARCH_URL
