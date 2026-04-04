@@ -150,9 +150,10 @@ export async function getForYouFeed(
   const cutoff = cursor ?? new Date();
   const since = new Date(Date.now() - 48 * 60 * 60 * 1000); // 48h window
 
-  // Source candidates from different pools
+  // Source candidates — exclude replies (parentId is null = top-level posts only)
   const conditions = [
     isNull(posts.deletedAt),
+    isNull(posts.parentId),
     eq(posts.isFlagged, false),
     gte(posts.createdAt, since),
   ];
@@ -256,6 +257,7 @@ export async function getTrendingFeed(
 
   const conditions = [
     isNull(posts.deletedAt),
+    isNull(posts.parentId),
     eq(posts.isFlagged, false),
     gte(posts.createdAt, since),
   ];
