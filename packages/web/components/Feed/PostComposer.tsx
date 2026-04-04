@@ -43,13 +43,13 @@ export function PostComposer({ channels = [], onPostCreated }: PostComposerProps
   }, [canSubmit, content, channelId, onPostCreated]);
 
   return (
-    <div className="glass-card p-4">
+    <div className="border border-border-hi bg-surface/80 px-5 pt-4 pb-3">
       <textarea
         value={content}
         onChange={(e) => setContent(e.target.value)}
-        placeholder="> compose a new post..."
+        placeholder="Share an update, drop a code block, or post a live note..."
         rows={3}
-        className="w-full p-3 text-sm resize-none bg-bg border border-border-hi focus:border-border-focus"
+        className="w-full min-h-[112px] p-3 text-sm resize-y bg-bg border border-border-hi focus:border-border-focus"
         onKeyDown={(e) => {
           if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
             handleSubmit();
@@ -61,7 +61,7 @@ export function PostComposer({ channels = [], onPostCreated }: PostComposerProps
         <p className="text-danger text-xs mt-2">{error}</p>
       )}
 
-      <div className="flex items-center justify-between mt-3">
+      <div className="flex flex-col gap-3 mt-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
           {/* Channel selector */}
           {channels.length > 0 && (
@@ -81,6 +81,10 @@ export function PostComposer({ channels = [], onPostCreated }: PostComposerProps
               </select>
             </div>
           )}
+
+          <span className="text-[11px] uppercase tracking-[0.18em] text-text-3">
+            Markdown supported
+          </span>
         </div>
 
         <div className="flex items-center gap-3">

@@ -10,7 +10,7 @@ export function Skeleton({ className }: SkeletonProps) {
 
 export function PostCardSkeleton() {
   return (
-    <div className="glass-card p-5">
+    <div className="border border-border-hi bg-surface/70 p-5">
       <div className="flex items-start gap-3">
         <Skeleton className="w-10 h-10 shrink-0" />
         <div className="flex-1 space-y-3">

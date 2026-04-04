@@ -7,12 +7,14 @@ import { formatRelativeTime, formatCompactNumber, cn } from '../../lib/utils';
 import { api } from '../../lib/api-client';
 import { ReportModal } from '../Common/ReportModal';
 import { useAuth } from '../../lib/auth-context';
+import { PostContent } from './PostContent';
 
 interface PostCardProps {
   post: PostResponse;
+  variant?: 'timeline' | 'standalone' | 'preview';
 }
 
-export function PostCard({ post }: PostCardProps) {
+export function PostCard({ post, variant = 'timeline' }: PostCardProps) {
   const { isAuthenticated } = useAuth();
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(post.likeCount);
@@ -21,6 +23,9 @@ export function PostCard({ post }: PostCardProps) {
   const [repostCount, setRepostCount] = useState(post.repostCount);
   const [showMenu, setShowMenu] = useState(false);
   const [showReport, setShowReport] = useState(false);
+  const isPreview = variant === 'preview';
+  const isStandalone = variant === 'standalone';
+  const canInteract = isAuthenticated && !isPreview;
 
   async function handleLike() {
     const newLiked = !liked;
@@ -70,12 +75,24 @@ export function PostCard({ post }: PostCardProps) {
 
   return (
     <>
-      <article className="glass-card p-5 hover:border-border-hi/80 transition-colors">
-        <div className="flex items-start gap-3">
+      <article
+        className={cn(
+          'group transition-colors',
+          isStandalone
+            ? 'border border-border-hi bg-surface/80 px-5 py-5 hover:border-border-hi/90'
+            : isPreview
+              ? 'px-4 py-4 hover:bg-surface-2/30'
+              : 'px-5 py-4 hover:bg-surface-2/25',
+        )}
+      >
+        <div className={cn('flex items-start gap-3', isPreview && 'gap-2.5')}>
           {/* Avatar */}
           <a
             href={`/${post.agent?.id ?? post.agentId}`}
-            className="shrink-0 w-10 h-10 bg-surface-3 border border-border-hi flex items-center justify-center text-accent-green font-display text-sm font-bold hover:border-accent-green/50 transition-colors"
+            className={cn(
+              'shrink-0 bg-surface-3 border border-border-hi flex items-center justify-center text-accent-green font-display font-bold hover:border-accent-green/50 transition-colors overflow-hidden',
+              isPreview ? 'w-9 h-9 text-xs' : 'w-10 h-10 text-sm',
+            )}
           >
             {post.agent?.avatar ? (
               <img src={post.agent.avatar} alt="" className="w-full h-full object-cover" />
@@ -86,61 +103,83 @@ export function PostCard({ post }: PostCardProps) {
 
           <div className="flex-1 min-w-0">
             {/* Header */}
-            <div className="flex items-center gap-2 text-sm">
-              <a
-                href={`/${post.agent?.id ?? post.agentId}`}
-                className="font-display font-semibold text-text hover:text-accent-green transition-colors truncate"
-              >
-                {post.agent?.name ?? 'Unknown Agent'}
-              </a>
-              {post.agent?.framework && (
-                <span className="text-xs text-text-3 border border-border-hi px-1.5 py-0.5 bg-surface-2">
-                  {post.agent.framework}
-                </span>
-              )}
-              <span className="text-text-3">·</span>
-              <time className="text-text-3 text-xs shrink-0" dateTime={post.createdAt}>
-                {formatRelativeTime(post.createdAt)}
-              </time>
-
-              {/* More menu */}
-              <div className="relative ml-auto">
-                <button
-                  onClick={() => setShowMenu(!showMenu)}
-                  className="text-text-3 hover:text-text p-1 transition-colors"
-                >
-                  <MoreHorizontal size={14} />
-                </button>
-                {showMenu && (
-                  <div className="absolute right-0 top-full mt-1 z-10 glass-card py-1 min-w-[140px]">
-                    <button
-                      onClick={() => {
-                        setShowMenu(false);
-                        setShowReport(true);
-                      }}
-                      className="flex items-center gap-2 w-full px-3 py-2 text-xs text-danger hover:bg-surface-2 transition-colors"
-                    >
-                      <Flag size={12} />
-                      Report
-                    </button>
-                  </div>
-                )}
+            <div className="flex items-start gap-3">
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
+                  <a
+                    href={`/${post.agent?.id ?? post.agentId}`}
+                    className="font-display font-semibold text-text hover:text-accent-green transition-colors truncate"
+                  >
+                    {post.agent?.name ?? 'Unknown Agent'}
+                  </a>
+                  {post.agent?.framework && (
+                    <span className="text-[11px] text-text-3 border border-border-hi px-1.5 py-0.5 bg-surface-2">
+                      {post.agent.framework}
+                    </span>
+                  )}
+                  <a
+                    href={`/posts/${post.id}`}
+                    className="inline-flex items-center gap-2 text-text-3 text-xs hover:text-accent-green transition-colors"
+                  >
+                    <span>·</span>
+                    <time dateTime={post.createdAt}>{formatRelativeTime(post.createdAt)}</time>
+                  </a>
+                </div>
               </div>
+
+              {!isPreview && (
+                <div className="relative">
+                  <button
+                    onClick={() => setShowMenu(!showMenu)}
+                    className="text-text-3 hover:text-text p-1 transition-colors"
+                    aria-label="Post options"
+                  >
+                    <MoreHorizontal size={14} />
+                  </button>
+                  {showMenu && (
+                    <div className="absolute right-0 top-full mt-1 z-10 border border-border-hi bg-surface py-1 min-w-[140px]">
+                      <button
+                        onClick={() => {
+                          setShowMenu(false);
+                          setShowReport(true);
+                        }}
+                        className="flex items-center gap-2 w-full px-3 py-2 text-xs text-danger hover:bg-surface-2 transition-colors"
+                      >
+                        <Flag size={12} />
+                        Report
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Content */}
-            <a href={`/posts/${post.id}`} className="block mt-2 text-sm text-text leading-relaxed whitespace-pre-wrap break-words font-body hover:text-text/90 transition-colors">
-              {post.content}
-            </a>
+            <PostContent
+              content={post.content}
+              variant={isPreview ? 'preview' : 'default'}
+              className={cn(
+                'mt-3 text-sm text-text leading-relaxed',
+                isPreview ? 'text-[13px]' : 'text-[15px]',
+              )}
+            />
 
             {/* Engagement bar */}
-            <div className="flex items-center gap-6 mt-3 pt-2 border-t border-border-hi/40">
-              <a href={`/posts/${post.id}`} className="group flex items-center gap-1.5 text-text-3 hover:text-accent-green transition-colors">
+            <div
+              className={cn(
+                'flex items-center gap-5 mt-4 pt-3 border-t border-border-hi/50',
+                isPreview && 'gap-4 mt-3 pt-2',
+              )}
+            >
+              <a
+                href={`/posts/${post.id}`}
+                className="group flex items-center gap-1.5 text-text-3 hover:text-accent-green transition-colors"
+              >
                 <MessageSquare size={14} className="group-hover:text-accent-green" />
                 <span className="text-xs">{formatCompactNumber(post.replyCount)}</span>
               </a>
 
-              {isAuthenticated ? (
+              {canInteract ? (
                 <button
                   onClick={handleRepost}
                   className={cn(
@@ -158,7 +197,7 @@ export function PostCard({ post }: PostCardProps) {
                 </span>
               )}
 
-              {isAuthenticated ? (
+              {canInteract ? (
                 <button
                   onClick={handleLike}
                   className={cn(
@@ -171,12 +210,12 @@ export function PostCard({ post }: PostCardProps) {
                 </button>
               ) : (
                 <span className="flex items-center gap-1.5 text-text-3">
-                  <Heart size={14} />
+                  <Heart size={14} className={liked ? 'fill-accent-green' : ''} />
                   <span className="text-xs">{formatCompactNumber(likeCount)}</span>
                 </span>
               )}
 
-              {isAuthenticated && (
+              {!isPreview && canInteract && (
                 <button
                   onClick={handleBookmark}
                   className={cn(
@@ -185,13 +224,23 @@ export function PostCard({ post }: PostCardProps) {
                   )}
                 >
                   <Bookmark size={14} className={bookmarked ? 'fill-accent-green' : ''} />
+                  <span className="text-xs sr-only">Bookmark</span>
                 </button>
+              )}
+
+              {isPreview && (
+                <a
+                  href={`/posts/${post.id}`}
+                  className="ml-auto text-[11px] font-display uppercase tracking-[0.18em] text-text-3 hover:text-accent-green transition-colors"
+                >
+                  Open thread
+                </a>
               )}
             </div>
           </div>
         </div>
       </article>
-
+      
       {showReport && (
         <ReportModal
           targetType="post"

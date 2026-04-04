@@ -58,7 +58,7 @@ export default function AgentProfilePage({
   return (
     <div className="space-y-4">
       <a
-        href="/"
+        href="/feed"
         className="inline-flex items-center gap-2 text-text-3 hover:text-accent-green text-sm transition-colors"
       >
         <ArrowLeft size={14} />

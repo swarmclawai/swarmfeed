@@ -3,11 +3,11 @@
 import { useState, useEffect } from 'react';
 import { ArrowLeft, MessageSquare, Send } from 'lucide-react';
 import type { PostResponse } from '@swarmfeed/shared';
+import { FeedTimeline } from '../../../../components/Feed/FeedTimeline';
 import { PostCard } from '../../../../components/Feed/PostCard';
 import { PostCardSkeleton } from '../../../../components/Common/Skeleton';
 import { api } from '../../../../lib/api-client';
 import { useAuth } from '../../../../lib/auth-context';
-import { formatRelativeTime } from '../../../../lib/utils';
 import { useParams } from 'next/navigation';
 
 export default function PostDetailPage() {
@@ -138,24 +138,29 @@ export default function PostDetailPage() {
       </a>
 
       {/* Main post */}
-      <PostCard post={post} />
+      <PostCard post={post} variant="standalone" />
 
       {/* Reply composer */}
       {isAuthenticated && (
-        <form onSubmit={handleReply} className="glass-card p-4">
+        <form onSubmit={handleReply} className="border border-border-hi bg-surface/80 px-5 py-4">
           <div className="flex items-start gap-3">
             <div className="flex-1">
               <textarea
                 value={replyContent}
                 onChange={(e) => setReplyContent(e.target.value)}
-                placeholder="Write a reply..."
-                className="w-full p-3 text-sm min-h-[80px] resize-y"
+                placeholder="Write a reply, add context, or drop a code block..."
+                className="w-full p-3 text-sm min-h-[96px] resize-y"
                 maxLength={2000}
               />
-              <div className="flex items-center justify-between mt-2">
-                <span className="text-xs text-text-3">
-                  {replyContent.length}/2000
-                </span>
+              <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-center gap-3">
+                  <span className="text-[11px] uppercase tracking-[0.18em] text-text-3">
+                    Markdown supported
+                  </span>
+                  <span className="text-xs text-text-3">
+                    {replyContent.length}/2000
+                  </span>
+                </div>
                 <button
                   type="submit"
                   disabled={!replyContent.trim() || sending}
@@ -196,14 +201,12 @@ export default function PostDetailPage() {
             ))}
           </div>
         ) : replies.length === 0 ? (
-          <div className="glass-card p-6 text-center">
+          <div className="border border-border-hi bg-surface/70 p-6 text-center">
             <p className="text-text-3 text-sm">No replies yet. Be the first to respond!</p>
           </div>
         ) : (
-          <div className="space-y-3">
-            {replies.map((reply) => (
-              <PostCard key={reply.id} post={reply} />
-            ))}
+          <div className="space-y-4">
+            <FeedTimeline posts={replies} />
             {nextCursor && (
               <button
                 onClick={loadMoreReplies}

@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Bookmark } from 'lucide-react';
 import type { PostResponse } from '@swarmfeed/shared';
-import { PostCard } from '../../../components/Feed/PostCard';
+import { FeedTimeline } from '../../../components/Feed/FeedTimeline';
 import { PostCardSkeleton } from '../../../components/Common/Skeleton';
 import { InfiniteScroll } from '../../../components/Feed/InfiniteScroll';
 import { api } from '../../../lib/api-client';
@@ -58,7 +58,7 @@ export default function BookmarksPage() {
       </div>
 
       {loading ? (
-        <div className="space-y-3">
+        <div className="space-y-px">
           {Array.from({ length: 5 }).map((_, i) => (
             <PostCardSkeleton key={i} />
           ))}
@@ -71,11 +71,7 @@ export default function BookmarksPage() {
         </div>
       ) : (
         <InfiniteScroll onLoadMore={loadMore} hasMore={!!nextCursor} loading={loadingMore}>
-          <div className="space-y-3">
-            {posts.map((post) => (
-              <PostCard key={post.id} post={post} />
-            ))}
-          </div>
+          <FeedTimeline posts={posts} />
         </InfiniteScroll>
       )}
 

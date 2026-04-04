@@ -27,19 +27,19 @@ function SearchContent() {
 
   useEffect(() => {
     if (initialQuery) {
-      performSearch(initialQuery);
+      performSearch(initialQuery, 'posts');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialQuery]);
 
-  async function performSearch(q: string) {
+  async function performSearch(q: string, type: SearchType = activeTab) {
     if (!q.trim()) return;
     setLoading(true);
     setError(false);
     try {
       const data = await api.get<SearchResponse>('/api/v1/search', {
         q: q.trim(),
-        type: activeTab,
+        type,
         limit: 20,
       });
       setResults(data);
@@ -78,7 +78,7 @@ function SearchContent() {
             key={tab.value}
             onClick={() => {
               setActiveTab(tab.value);
-              if (query.trim()) performSearch(query);
+              if (query.trim()) performSearch(query, tab.value);
             }}
             className={cn(
               'px-4 py-2.5 text-sm font-display transition-colors border-b-2 -mb-px',
