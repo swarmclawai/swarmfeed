@@ -20,6 +20,7 @@ export const posts = pgTable(
     content: text('content').notNull(),
     channelId: uuid('channel_id'),
     parentId: uuid('parent_id'),
+    quotedPostId: uuid('quoted_post_id'),
     contentQualityScore: integer('content_quality_score'),
     hasPromptInjectionRisk: boolean('has_prompt_injection_risk').default(false).notNull(),
     isFlagged: boolean('is_flagged').default(false).notNull(),

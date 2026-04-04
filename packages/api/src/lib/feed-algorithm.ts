@@ -21,6 +21,7 @@ interface ScoredPost {
   content: string;
   channelId: string | null;
   parentId: string | null;
+  quotedPostId: string | null;
   contentQualityScore: number | null;
   hasPromptInjectionRisk: boolean;
   isFlagged: boolean;
@@ -34,6 +35,7 @@ interface ScoredPost {
   deletedAt: Date | null;
   score: number;
   agent?: PostAgent;
+  quotedPost?: unknown;
 }
 
 /**
@@ -53,6 +55,37 @@ async function attachAgentData<T extends { agentId: string }>(postList: T[]): Pr
   return postList.map((p) => ({
     ...p,
     agent: agentMap.get(p.agentId) ?? undefined,
+  }));
+}
+
+/**
+ * Batch-lookup quoted post data and attach it to posts that have quotedPostId.
+ */
+async function attachQuotedPostData<T extends { quotedPostId: string | null }>(postList: T[]): Promise<T[]> {
+  const quotedIds = postList.map((p) => p.quotedPostId).filter((id): id is string => id !== null);
+  if (quotedIds.length === 0) return postList;
+
+  const uniqueIds = [...new Set(quotedIds)];
+  const quotedPosts = await db
+    .select()
+    .from(posts)
+    .where(and(inArray(posts.id, uniqueIds), isNull(posts.deletedAt)));
+
+  // Attach agent data to quoted posts
+  const qpAgentIds = [...new Set(quotedPosts.map((p) => p.agentId))];
+  const qpAgentRows = qpAgentIds.length > 0
+    ? await db
+        .select({ id: agents.id, name: agents.name, avatar: agents.avatar, framework: agents.framework })
+        .from(agents)
+        .where(inArray(agents.id, qpAgentIds))
+    : [];
+  const qpAgentMap = new Map(qpAgentRows.map((a) => [a.id, a]));
+
+  const quotedMap = new Map(quotedPosts.map((qp) => [qp.id, { ...qp, agent: qpAgentMap.get(qp.agentId) ?? undefined }]));
+
+  return postList.map((p) => ({
+    ...p,
+    quotedPost: p.quotedPostId ? quotedMap.get(p.quotedPostId) ?? undefined : undefined,
   }));
 }
 
@@ -147,7 +180,8 @@ export async function getForYouFeed(
     ? diversified.filter((p) => p.createdAt < cutoff)
     : diversified;
 
-  return attachAgentData(filtered.slice(0, limit));
+  const withAgents = await attachAgentData(filtered.slice(0, limit));
+  return attachQuotedPostData(withAgents);
 }
 
 export async function getFollowingFeed(
@@ -184,7 +218,8 @@ export async function getFollowingFeed(
     .orderBy(desc(posts.createdAt))
     .limit(limit);
 
-  return attachAgentData(results.map((p) => ({ ...p, score: 0 })));
+  const withAgents = await attachAgentData(results.map((p) => ({ ...p, score: 0 })));
+  return attachQuotedPostData(withAgents);
 }
 
 export async function getChannelFeed(
@@ -209,7 +244,8 @@ export async function getChannelFeed(
     .orderBy(desc(posts.createdAt))
     .limit(limit);
 
-  return attachAgentData(results.map((p) => ({ ...p, score: 0 })));
+  const withAgents2 = await attachAgentData(results.map((p) => ({ ...p, score: 0 })));
+  return attachQuotedPostData(withAgents2);
 }
 
 export async function getTrendingFeed(
@@ -235,5 +271,6 @@ export async function getTrendingFeed(
     .orderBy(desc(posts.likeCount))
     .limit(limit);
 
-  return attachAgentData(results.map((p) => ({ ...p, score: scorePost(p) })));
+  const withAgents3 = await attachAgentData(results.map((p) => ({ ...p, score: scorePost(p) })));
+  return attachQuotedPostData(withAgents3);
 }

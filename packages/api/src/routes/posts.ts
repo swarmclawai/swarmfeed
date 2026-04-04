@@ -37,7 +37,17 @@ app.post('/', authMiddleware, rateLimiter('posts'), async (c) => {
     return c.json({ error: 'Validation failed', details: parsed.error.flatten() }, 400);
   }
 
-  const { content, channelId, parentId } = parsed.data;
+  const { content, channelId, parentId, quotedPostId } = parsed.data;
+
+  // Validate quoted post exists if provided
+  if (quotedPostId) {
+    const quotedPost = await db.query.posts.findFirst({
+      where: and(eq(posts.id, quotedPostId), isNull(posts.deletedAt)),
+    });
+    if (!quotedPost) {
+      return c.json({ error: 'Quoted post not found' }, 404);
+    }
+  }
 
   // Run injection scan
   const injectionResult = scanForInjection(content);
@@ -52,6 +62,7 @@ app.post('/', authMiddleware, rateLimiter('posts'), async (c) => {
       content,
       channelId: channelId ?? null,
       parentId: parentId ?? null,
+      quotedPostId: quotedPostId ?? null,
       contentQualityScore: qualityResult.score,
       hasPromptInjectionRisk: injectionResult.hasRisk,
       isFlagged: injectionResult.riskScore > 0.6,
@@ -67,6 +78,14 @@ app.post('/', authMiddleware, rateLimiter('posts'), async (c) => {
       .update(posts)
       .set({ replyCount: sql`${posts.replyCount} + 1` })
       .where(eq(posts.id, parentId));
+  }
+
+  // If this is a quote repost, increment the quoted post's repost count
+  if (quotedPostId) {
+    await db
+      .update(posts)
+      .set({ repostCount: sql`${posts.repostCount} + 1` })
+      .where(eq(posts.id, quotedPostId));
   }
 
   // If posted in a channel, increment channel post count
@@ -150,7 +169,22 @@ app.get('/:postId', async (c) => {
     columns: { id: true, name: true, avatar: true, framework: true },
   });
 
-  return c.json({ ...post, agent: agent ?? undefined });
+  // Join quoted post data if this is a quote repost
+  let quotedPost = undefined;
+  if (post.quotedPostId) {
+    const qp = await db.query.posts.findFirst({
+      where: and(eq(posts.id, post.quotedPostId), isNull(posts.deletedAt)),
+    });
+    if (qp) {
+      const qpAgent = await db.query.agents.findFirst({
+        where: eq(agents.id, qp.agentId),
+        columns: { id: true, name: true, avatar: true, framework: true },
+      });
+      quotedPost = { ...qp, agent: qpAgent ?? undefined };
+    }
+  }
+
+  return c.json({ ...post, agent: agent ?? undefined, quotedPost });
 });
 
 /**
@@ -194,8 +228,29 @@ app.get('/:postId/replies', async (c) => {
     : [];
   const agentMap = new Map(agentRows.map((a) => [a.id, a]));
 
+  // Join quoted post data for replies that are quote reposts
+  const quotedPostIds = page.map((p) => p.quotedPostId).filter((id): id is string => id !== null);
+  let quotedPostMap = new Map<string, unknown>();
+  if (quotedPostIds.length > 0) {
+    const uniqueQpIds = [...new Set(quotedPostIds)];
+    const quotedPosts = await db
+      .select()
+      .from(posts)
+      .where(and(inArray(posts.id, uniqueQpIds), isNull(posts.deletedAt)));
+    const qpAgentIds = [...new Set(quotedPosts.map((qp) => qp.agentId))];
+    const qpAgentRows = qpAgentIds.length > 0
+      ? await db.select({ id: agents.id, name: agents.name, avatar: agents.avatar, framework: agents.framework }).from(agents).where(inArray(agents.id, qpAgentIds))
+      : [];
+    const qpAgentMap = new Map(qpAgentRows.map((a) => [a.id, a]));
+    quotedPostMap = new Map(quotedPosts.map((qp) => [qp.id, { ...qp, agent: qpAgentMap.get(qp.agentId) ?? undefined }]));
+  }
+
   return c.json({
-    posts: page.map((p) => ({ ...p, agent: agentMap.get(p.agentId) ?? undefined })),
+    posts: page.map((p) => ({
+      ...p,
+      agent: agentMap.get(p.agentId) ?? undefined,
+      quotedPost: p.quotedPostId ? quotedPostMap.get(p.quotedPostId) ?? undefined : undefined,
+    })),
     nextCursor,
   });
 });

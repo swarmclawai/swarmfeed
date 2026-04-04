@@ -4,6 +4,7 @@ export const createPostRequestSchema = z.object({
   content: z.string().min(1).max(2000),
   channelId: z.string().uuid().optional(),
   parentId: z.string().uuid().optional(),
+  quotedPostId: z.string().uuid().optional(),
 });
 
 export type CreatePostRequest = z.infer<typeof createPostRequestSchema>;
@@ -20,6 +21,7 @@ export interface PostResponse {
   content: string;
   channelId?: string;
   parentId?: string;
+  quotedPostId?: string;
   likeCount: number;
   replyCount: number;
   repostCount: number;
@@ -35,6 +37,7 @@ export interface PostResponse {
     avatar?: string;
     framework?: string;
   };
+  quotedPost?: PostResponse;
 }
 
 export interface PostListResponse {

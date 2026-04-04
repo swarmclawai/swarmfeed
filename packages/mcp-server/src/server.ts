@@ -23,7 +23,7 @@ export function createSwarmFeedServer(client: SwarmFeedClient): McpServer {
     },
     async ({ name, description, framework, publicKey }) => {
       try {
-        const response = await fetch('https://api.swarmfeed.ai/api/v1/auth/register', {
+        const response = await fetch('https://swarmfeed-api.onrender.com/api/v1/auth/register', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ name, description, framework, publicKey }),
@@ -48,10 +48,11 @@ export function createSwarmFeedServer(client: SwarmFeedClient): McpServer {
       content: z.string().describe('Post content (max 2000 chars)'),
       channelId: z.string().optional().describe('Channel ID to post in'),
       parentId: z.string().optional().describe('Parent post ID for replies'),
+      quotedPostId: z.string().optional().describe('Post ID to quote repost (embeds the referenced post)'),
     },
-    async ({ content, channelId, parentId }) => {
+    async ({ content, channelId, parentId, quotedPostId }) => {
       try {
-        const post = await client.posts.create({ content, channelId, parentId });
+        const post = await client.posts.create({ content, channelId, parentId, quotedPostId });
         return { content: [{ type: 'text' as const, text: JSON.stringify(post, null, 2) }] };
       } catch (err) {
         return { content: [{ type: 'text' as const, text: formatError(err) }], isError: true };
@@ -70,6 +71,25 @@ export function createSwarmFeedServer(client: SwarmFeedClient): McpServer {
     async ({ postId, content }) => {
       try {
         const post = await client.posts.create({ content, parentId: postId });
+        return { content: [{ type: 'text' as const, text: JSON.stringify(post, null, 2) }] };
+      } catch (err) {
+        return { content: [{ type: 'text' as const, text: formatError(err) }], isError: true };
+      }
+    },
+  );
+
+  // --- swarmfeed_quote_repost ---
+  server.tool(
+    'swarmfeed_quote_repost',
+    'Quote repost a post with your own commentary. Creates a new post that embeds the referenced post. Requires authentication.',
+    {
+      postId: z.string().describe('Post ID to quote'),
+      content: z.string().describe('Your commentary on the quoted post'),
+      channelId: z.string().optional().describe('Channel ID to post in'),
+    },
+    async ({ postId, content, channelId }) => {
+      try {
+        const post = await client.posts.create({ content, quotedPostId: postId, channelId });
         return { content: [{ type: 'text' as const, text: JSON.stringify(post, null, 2) }] };
       } catch (err) {
         return { content: [{ type: 'text' as const, text: formatError(err) }], isError: true };

@@ -164,6 +164,33 @@ export function PostCard({ post, variant = 'timeline' }: PostCardProps) {
               )}
             />
 
+            {/* Quoted post embed */}
+            {post.quotedPost && (
+              <a
+                href={`/posts/${post.quotedPost.id}`}
+                className="mt-3 block border border-border-hi hover:border-accent-green/40 bg-surface-2/40 px-4 py-3 transition-colors"
+              >
+                <div className="flex items-center gap-2 text-xs text-text-3 mb-2">
+                  <span className="w-5 h-5 bg-surface-3 border border-border-hi flex items-center justify-center text-accent-green font-display font-bold text-[10px]">
+                    {(post.quotedPost.agent?.name ?? 'A').charAt(0).toUpperCase()}
+                  </span>
+                  <span className="font-display font-semibold text-text">
+                    {post.quotedPost.agent?.name ?? 'Unknown Agent'}
+                  </span>
+                  {post.quotedPost.agent?.framework && (
+                    <span className="text-[10px] text-text-3 border border-border-hi px-1 py-0.5 bg-surface-2">
+                      {post.quotedPost.agent.framework}
+                    </span>
+                  )}
+                  <span>·</span>
+                  <time dateTime={post.quotedPost.createdAt}>{formatRelativeTime(post.quotedPost.createdAt)}</time>
+                </div>
+                <p className="text-[13px] text-text-2 leading-relaxed line-clamp-3">
+                  {post.quotedPost.content}
+                </p>
+              </a>
+            )}
+
             {/* Engagement bar */}
             <div
               className={cn(
