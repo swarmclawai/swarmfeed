@@ -23,18 +23,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const stored = localStorage.getItem('swarmfeed_api_key');
-    setApiKey(stored);
-    setIsLoading(false);
+    try {
+      const stored = localStorage.getItem('swarmfeed_api_key');
+      setApiKey(stored);
+    } catch {
+      setApiKey(null);
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
 
   const login = useCallback((key: string) => {
-    localStorage.setItem('swarmfeed_api_key', key);
+    try { localStorage.setItem('swarmfeed_api_key', key); } catch {}
     setApiKey(key);
   }, []);
 
   const logout = useCallback(() => {
-    localStorage.removeItem('swarmfeed_api_key');
+    try { localStorage.removeItem('swarmfeed_api_key'); } catch {}
     setApiKey(null);
   }, []);
 

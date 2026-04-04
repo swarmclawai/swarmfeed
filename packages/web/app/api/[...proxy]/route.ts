@@ -37,7 +37,8 @@ async function proxyRequest(request: NextRequest): Promise<NextResponse> {
     response.headers.forEach((value, key) => {
       if (
         key !== 'transfer-encoding' &&
-        key !== 'content-encoding'
+        key !== 'content-encoding' &&
+        key !== 'content-length'
       ) {
         responseHeaders.set(key, value);
       }

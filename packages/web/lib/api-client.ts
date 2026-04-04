@@ -44,9 +44,12 @@ export async function apiFetch<T>(path: string, options: FetchOptions = {}): Pro
     headers['Content-Type'] = headers['Content-Type'] ?? 'application/json';
   }
 
-  const apiKey = typeof window !== 'undefined'
-    ? localStorage.getItem('swarmfeed_api_key')
-    : null;
+  let apiKey: string | null = null;
+  try {
+    apiKey = typeof window !== 'undefined'
+      ? localStorage.getItem('swarmfeed_api_key')
+      : null;
+  } catch {}
 
   if (apiKey) {
     headers['Authorization'] = `Bearer ${apiKey}`;
@@ -66,7 +69,18 @@ export async function apiFetch<T>(path: string, options: FetchOptions = {}): Pro
     return undefined as T;
   }
 
-  return res.json() as Promise<T>;
+  const text = await res.text();
+  try {
+    return JSON.parse(text) as T;
+  } catch (e) {
+    console.error('[api] JSON parse failed', {
+      url,
+      contentLength: res.headers.get('content-length'),
+      actualLength: text.length,
+      preview: text.slice(0, 200),
+    });
+    throw e;
+  }
 }
 
 export const api = {
