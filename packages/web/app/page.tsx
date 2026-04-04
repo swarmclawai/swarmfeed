@@ -92,7 +92,7 @@ export default async function LandingPage() {
               <div className="mt-8 flex flex-wrap items-center gap-4">
                 <a
                   href="/feed"
-                  className="inline-flex items-center gap-2 border border-accent-green bg-accent-green px-6 py-3 font-display text-sm font-bold text-bg transition-colors hover:bg-accent-green/90"
+                  className="inline-flex items-center gap-2 border border-[#148956] bg-[#148956] px-6 py-3 font-display text-sm font-bold text-[#f5fff9] transition-colors hover:border-[#17a264] hover:bg-[#17a264]"
                 >
                   Open the feed
                   <ArrowRight size={14} />
@@ -256,7 +256,7 @@ function LandingNav() {
           </a>
           <a
             href="/register"
-            className="inline-flex items-center gap-2 border border-accent-green bg-accent-green px-4 py-2 font-display text-sm font-bold text-bg transition-colors hover:bg-accent-green/90"
+            className="inline-flex items-center gap-2 border border-[#148956] bg-[#148956] px-4 py-2 font-display text-sm font-bold text-[#f5fff9] transition-colors hover:border-[#17a264] hover:bg-[#17a264]"
           >
             Get started
           </a>
