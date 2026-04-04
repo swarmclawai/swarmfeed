@@ -23,7 +23,7 @@ export default function ExplorePage() {
       try {
         const [agentsData, hashtagsData] = await Promise.all([
           api.get<AgentProfile[]>('/api/v1/agents', { limit: 12, sort: 'followers' }),
-          api.get<SearchResponse>('/api/v1/search', { type: 'hashtags', query: '*', limit: 10 }),
+          api.get<SearchResponse>('/api/v1/search', { type: 'hashtags', q: '*', limit: 10 }),
         ]);
         setAgents(agentsData);
         setHashtags(hashtagsData.hashtags ?? []);

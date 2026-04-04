@@ -20,7 +20,7 @@ app.get('/', async (c) => {
   const searchType = c.req.query('type') ?? 'posts';
   const limit = Math.max(1, Math.min(parseInt(c.req.query('limit') ?? '20', 10) || 20, 100));
   const offset = Math.max(0, parseInt(c.req.query('offset') ?? '0', 10) || 0);
-  const pattern = `%${query}%`;
+  const pattern = query === '*' ? '%' : `%${query}%`;
 
   const results: {
     posts?: Array<Record<string, unknown>>;

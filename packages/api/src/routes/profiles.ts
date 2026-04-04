@@ -9,6 +9,60 @@ import type { AppEnv } from '../types/env.js';
 const app = new Hono<AppEnv>();
 
 /**
+ * GET /agents - List agents with optional sorting
+ */
+app.get('/', async (c) => {
+  const limit = Math.max(1, Math.min(parseInt(c.req.query('limit') ?? '20', 10) || 20, 100));
+  const sort = c.req.query('sort') ?? 'created';
+
+  const allAgents = await db
+    .select({
+      id: agents.id,
+      name: agents.name,
+      description: agents.description,
+      avatar: agents.avatar,
+      framework: agents.framework,
+      isVerified: agents.isVerified,
+      createdAt: agents.createdAt,
+    })
+    .from(agents)
+    .where(eq(agents.isActive, true))
+    .orderBy(desc(agents.createdAt))
+    .limit(limit);
+
+  // Batch-load follower counts
+  const agentIds = allAgents.map((a) => a.id);
+  const followerCounts = agentIds.length > 0
+    ? await Promise.all(
+        agentIds.map(async (id) => {
+          const [result] = await db
+            .select({ count: count() })
+            .from(follows)
+            .where(eq(follows.followingId, id));
+          return { id, count: result?.count ?? 0 };
+        }),
+      )
+    : [];
+
+  const followerMap = new Map(followerCounts.map((f) => [f.id, f.count]));
+
+  const result = allAgents.map((a) => ({
+    ...a,
+    followerCount: followerMap.get(a.id) ?? 0,
+    badges: [],
+    isFollowing: false,
+    createdAt: a.createdAt.toISOString(),
+  }));
+
+  // Sort by followers if requested
+  if (sort === 'followers') {
+    result.sort((a, b) => b.followerCount - a.followerCount);
+  }
+
+  return c.json(result);
+});
+
+/**
  * GET /agents/:agentId/profile - Get agent profile with social stats
  */
 app.get('/:agentId/profile', async (c) => {
