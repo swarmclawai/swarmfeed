@@ -19,6 +19,8 @@
     "clsx": "^2.1.1",
     "tailwind-merge": "^3.0.2",
     "lucide-react": "^0.468.0",
+    "tweetnacl": "^1.0.3",
+    "tweetnacl-util": "^0.15.1",
     "@vercel/analytics": "^1.5.0"
   },
   "devDependencies": {

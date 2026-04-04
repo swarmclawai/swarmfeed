@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Zap, Download, Copy, CheckCircle, AlertCircle } from 'lucide-react';
+import nacl from 'tweetnacl';
 
 export default function RegisterPage() {
   const [step, setStep] = useState<'form' | 'keypair' | 'verify' | 'done'>('form');
@@ -31,19 +32,10 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-      // Generate Ed25519 keypair in browser using Web Crypto API
-      const keyPair = await crypto.subtle.generateKey('Ed25519', true, ['sign', 'verify']);
-      const pubRaw = await crypto.subtle.exportKey('raw', keyPair.publicKey);
-      const privPkcs8 = await crypto.subtle.exportKey('pkcs8', keyPair.privateKey);
-      const pubHex = Array.from(new Uint8Array(pubRaw)).map(b => b.toString(16).padStart(2, '0')).join('');
-      // PKCS8 for Ed25519 has a 16-byte header, the last 32 bytes are the private key seed
-      const privBytes = new Uint8Array(privPkcs8);
-      const seed = privBytes.slice(privBytes.length - 32);
-      // Store the full 64-byte secret key (seed + public key) for tweetnacl compat
-      const fullSecret = new Uint8Array(64);
-      fullSecret.set(seed, 0);
-      fullSecret.set(new Uint8Array(pubRaw), 32);
-      const privHex = Array.from(fullSecret).map(b => b.toString(16).padStart(2, '0')).join('');
+      // Generate Ed25519 keypair using tweetnacl (works in all browsers)
+      const keyPair = nacl.sign.keyPair();
+      const pubHex = Array.from(keyPair.publicKey).map(b => b.toString(16).padStart(2, '0')).join('');
+      const privHex = Array.from(keyPair.secretKey).map(b => b.toString(16).padStart(2, '0')).join('');
 
       setPublicKeyHex(pubHex);
       setPrivateKeyHex(privHex);
@@ -86,19 +78,11 @@ export default function RegisterPage() {
     setError('');
 
     try {
-      // Re-import private key from hex for signing
+      // Sign challenge using tweetnacl (works in all browsers)
       const privBytes = new Uint8Array(privateKeyHex.match(/.{2}/g)!.map(b => parseInt(b, 16)));
-      // Extract the 32-byte seed (first 32 bytes of 64-byte tweetnacl secret key)
-      const seed = privBytes.slice(0, 32);
-      // PKCS8 wrapping for Ed25519 seed
-      const pkcs8Header = new Uint8Array([0x30, 0x2e, 0x02, 0x01, 0x00, 0x30, 0x05, 0x06, 0x03, 0x2b, 0x65, 0x70, 0x04, 0x22, 0x04, 0x20]);
-      const pkcs8 = new Uint8Array(pkcs8Header.length + seed.length);
-      pkcs8.set(pkcs8Header, 0);
-      pkcs8.set(seed, pkcs8Header.length);
-      const privateKey = await crypto.subtle.importKey('pkcs8', pkcs8, 'Ed25519', false, ['sign']);
       const messageBytes = new TextEncoder().encode(challenge);
-      const signature = await crypto.subtle.sign('Ed25519', privateKey, messageBytes);
-      const sigHex = Array.from(new Uint8Array(signature)).map(b => b.toString(16).padStart(2, '0')).join('');
+      const signature = nacl.sign.detached(messageBytes, privBytes);
+      const sigHex = Array.from(signature).map(b => b.toString(16).padStart(2, '0')).join('');
 
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3700'}/api/v1/register/verify`,

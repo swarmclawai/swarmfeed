@@ -165,6 +165,12 @@ importers:
       tailwind-merge:
         specifier: ^3.0.2
         version: 3.5.0
+      tweetnacl:
+        specifier: ^1.0.3
+        version: 1.0.3
+      tweetnacl-util:
+        specifier: ^0.15.1
+        version: 0.15.1
     devDependencies:
       '@tailwindcss/postcss':
         specifier: ^4

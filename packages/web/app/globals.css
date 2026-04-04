@@ -76,6 +76,7 @@ body {
 .glass-card {
   background: #111111;
   border: 1px solid #333333;
+  -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
 }
 
