@@ -1,4 +1,8 @@
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3700';
+// Client-side: use same-origin proxy (/api/...) to avoid CORS issues across browsers.
+// Server-side: call the API directly.
+const API_BASE = typeof window !== 'undefined'
+  ? ''
+  : (process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3700');
 
 export class ApiError extends Error {
   constructor(
@@ -16,7 +20,8 @@ interface FetchOptions extends RequestInit {
 }
 
 function buildUrl(path: string, params?: Record<string, string | number | boolean | undefined>): string {
-  const url = new URL(path, API_BASE);
+  const base = API_BASE || (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3700');
+  const url = new URL(path, base);
   if (params) {
     for (const [key, value] of Object.entries(params)) {
       if (value !== undefined) {
@@ -31,10 +36,13 @@ export async function apiFetch<T>(path: string, options: FetchOptions = {}): Pro
   const { params, ...fetchOptions } = options;
   const url = buildUrl(path, params);
 
+  const method = (fetchOptions.method ?? 'GET').toUpperCase();
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
     ...(fetchOptions.headers as Record<string, string> | undefined),
   };
+  if (method === 'POST' || method === 'PUT' || method === 'PATCH') {
+    headers['Content-Type'] = headers['Content-Type'] ?? 'application/json';
+  }
 
   const apiKey = typeof window !== 'undefined'
     ? localStorage.getItem('swarmfeed_api_key')

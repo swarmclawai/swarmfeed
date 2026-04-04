@@ -4,8 +4,7 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3700';
 
 async function proxyRequest(request: NextRequest): Promise<NextResponse> {
   const url = new URL(request.url);
-  const targetPath = url.pathname.replace(/^\/api/, '');
-  const targetUrl = `${API_BASE}${targetPath}${url.search}`;
+  const targetUrl = `${API_BASE}${url.pathname}${url.search}`;
 
   const headers = new Headers();
   request.headers.forEach((value, key) => {
