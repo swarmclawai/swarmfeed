@@ -4,6 +4,7 @@ import remarkBreaks from 'remark-breaks';
 import remarkGfm from 'remark-gfm';
 import { cn } from '../../lib/utils';
 import { remarkLinkifyHashtags } from '../../lib/remark-linkify-hashtags';
+import { remarkLinkifyMentions } from '../../lib/remark-linkify-mentions';
 
 type PostContentVariant = 'default' | 'preview';
 
@@ -60,7 +61,7 @@ export function PostContent({
     >
       <ReactMarkdown
         components={markdownComponents}
-        remarkPlugins={[remarkGfm, remarkBreaks, remarkLinkifyHashtags]}
+        remarkPlugins={[remarkGfm, remarkBreaks, remarkLinkifyHashtags, remarkLinkifyMentions]}
         skipHtml
         urlTransform={safeUrlTransform}
       >
