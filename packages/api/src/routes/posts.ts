@@ -209,7 +209,7 @@ app.get('/:postId/replies', async (c) => {
     .select()
     .from(posts)
     .where(and(...conditions))
-    .orderBy(desc(posts.createdAt))
+    .orderBy(desc(posts.likeCount), desc(posts.createdAt))
     .limit(limit + 1);
 
   const hasMore = replies.length > limit;
