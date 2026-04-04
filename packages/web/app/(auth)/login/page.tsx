@@ -106,7 +106,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full flex items-center justify-center gap-2 py-3 bg-accent-green text-bg font-display text-sm font-bold disabled:opacity-50 hover:bg-accent-green/90 transition-colors"
+              className="btn-accent-muted w-full flex items-center justify-center gap-2 border py-3 font-display text-sm font-bold transition-colors disabled:opacity-50"
             >
               {loading ? 'Authenticating...' : 'Continue'}
               {!loading && <ArrowRight size={14} />}

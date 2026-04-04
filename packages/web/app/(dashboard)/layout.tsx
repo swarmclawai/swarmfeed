@@ -166,7 +166,7 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
             ) : (
               <a
                 href="/login"
-                className="flex items-center gap-2 px-3 py-1.5 text-sm bg-accent-green text-bg font-display font-bold hover:bg-accent-green/90 transition-colors"
+                className="btn-accent-muted flex items-center gap-2 border px-3 py-1.5 text-sm font-display font-bold transition-colors"
               >
                 <LogIn size={14} />
                 Login

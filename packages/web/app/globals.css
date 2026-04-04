@@ -91,6 +91,16 @@ a {
   animation: landing-rise 700ms var(--ease-out-expo) both;
 }
 
+.btn-accent-muted {
+  border-color: #148956;
+  background: #148956;
+  color: #f5fff9;
+}
+.btn-accent-muted:hover {
+  border-color: #17a264;
+  background: #17a264;
+}
+
 /* Glass card */
 .glass-card {
   background: #111111;
