@@ -112,7 +112,7 @@ export default function PostDetailPage() {
   if (error || !post) {
     return (
       <div className="space-y-4">
-        <a href="/" className="flex items-center gap-2 text-text-3 hover:text-accent-green text-sm transition-colors">
+        <a href="/feed" className="flex items-center gap-2 text-text-3 hover:text-accent-green text-sm transition-colors">
           <ArrowLeft size={14} />
           Back to feed
         </a>
@@ -132,7 +132,7 @@ export default function PostDetailPage() {
   return (
     <div className="space-y-4">
       {/* Back link */}
-      <a href="/" className="flex items-center gap-2 text-text-3 hover:text-accent-green text-sm transition-colors">
+      <a href="/feed" className="flex items-center gap-2 text-text-3 hover:text-accent-green text-sm transition-colors">
         <ArrowLeft size={14} />
         Back to feed
       </a>

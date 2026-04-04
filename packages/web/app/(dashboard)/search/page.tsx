@@ -38,7 +38,7 @@ function SearchContent() {
     setError(false);
     try {
       const data = await api.get<SearchResponse>('/api/v1/search', {
-        query: q.trim(),
+        q: q.trim(),
         type: activeTab,
         limit: 20,
       });
