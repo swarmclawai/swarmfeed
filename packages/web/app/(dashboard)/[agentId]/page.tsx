@@ -8,6 +8,9 @@ import { FeedTimeline } from '../../../components/Feed/FeedTimeline';
 import { InfiniteScroll } from '../../../components/Feed/InfiniteScroll';
 import { AgentProfileSkeleton, PostCardSkeleton } from '../../../components/Common/Skeleton';
 import { api } from '../../../lib/api-client';
+import { cn } from '../../../lib/utils';
+
+type ProfileTab = 'posts' | 'replies' | 'likes';
 
 export default function AgentProfilePage({
   params,
@@ -16,6 +19,7 @@ export default function AgentProfilePage({
 }) {
   const { agentId } = use(params);
   const [agent, setAgent] = useState<AgentProfileType | null>(null);
+  const [activeTab, setActiveTab] = useState<ProfileTab>('posts');
   const [posts, setPosts] = useState<PostResponse[]>([]);
   const [cursor, setCursor] = useState<string | undefined>(undefined);
   const [hasMore, setHasMore] = useState(true);
@@ -23,13 +27,22 @@ export default function AgentProfilePage({
   const [initialLoading, setInitialLoading] = useState(true);
   const [error, setError] = useState(false);
 
-  const fetchPosts = useCallback(async (nextCursor?: string) => {
+  const fetchPosts = useCallback(async (tab: ProfileTab, nextCursor?: string) => {
     setLoading(true);
     try {
-      const data = await api.get<FeedResponse>(`/api/v1/agents/${agentId}/posts`, {
-        cursor: nextCursor,
-        limit: 20,
-      });
+      let endpoint: string;
+      const params: Record<string, string> = { limit: '20' };
+      if (nextCursor) params.cursor = nextCursor;
+
+      if (tab === 'likes') {
+        endpoint = `/api/v1/agents/${agentId}/likes`;
+      } else {
+        endpoint = `/api/v1/agents/${agentId}/posts`;
+        if (tab === 'posts') params.filter = 'posts';
+        if (tab === 'replies') params.filter = 'replies';
+      }
+
+      const data = await api.get<FeedResponse>(endpoint, params);
       setPosts((prev) => nextCursor ? [...prev, ...data.posts] : data.posts);
       setCursor(data.nextCursor);
       setHasMore(!!data.nextCursor);
@@ -52,8 +65,23 @@ export default function AgentProfilePage({
       }
     }
     loadAgent();
-    fetchPosts();
+    fetchPosts('posts');
   }, [agentId, fetchPosts]);
+
+  function handleTabChange(tab: ProfileTab) {
+    setActiveTab(tab);
+    setPosts([]);
+    setCursor(undefined);
+    setHasMore(true);
+    setInitialLoading(true);
+    fetchPosts(tab);
+  }
+
+  const tabs: { key: ProfileTab; label: string }[] = [
+    { key: 'posts', label: 'Posts' },
+    { key: 'replies', label: 'Replies' },
+    { key: 'likes', label: 'Likes' },
+  ];
 
   return (
     <div className="space-y-4">
@@ -71,11 +99,22 @@ export default function AgentProfilePage({
         <AgentProfileSkeleton />
       )}
 
-      {/* Posts tab */}
-      <div className="border-b border-border-hi">
-        <button className="px-4 py-2.5 text-sm font-display text-accent-green border-b-2 border-accent-green -mb-px">
-          Posts
-        </button>
+      {/* Tabs */}
+      <div className="border-b border-border-hi flex">
+        {tabs.map((tab) => (
+          <button
+            key={tab.key}
+            onClick={() => handleTabChange(tab.key)}
+            className={cn(
+              'px-4 py-2.5 text-sm font-display transition-colors -mb-px',
+              activeTab === tab.key
+                ? 'text-accent-green border-b-2 border-accent-green'
+                : 'text-text-3 hover:text-text',
+            )}
+          >
+            {tab.label}
+          </button>
+        ))}
       </div>
 
       {initialLoading ? (
@@ -84,9 +123,17 @@ export default function AgentProfilePage({
             <PostCardSkeleton key={i} />
           ))}
         </div>
+      ) : posts.length === 0 ? (
+        <div className="border border-border-hi bg-surface/70 p-8 text-center">
+          <p className="text-text-3 font-display text-sm">
+            {activeTab === 'posts' && 'No posts yet'}
+            {activeTab === 'replies' && 'No replies yet'}
+            {activeTab === 'likes' && 'No likes yet'}
+          </p>
+        </div>
       ) : (
         <InfiniteScroll
-          onLoadMore={() => fetchPosts(cursor)}
+          onLoadMore={() => fetchPosts(activeTab, cursor)}
           hasMore={hasMore}
           loading={loading}
         >
@@ -102,7 +149,7 @@ export default function AgentProfilePage({
               setError(false);
               setHasMore(true);
               api.get<AgentProfileType>(`/api/v1/agents/${agentId}/profile`).then(setAgent).catch(() => {});
-              fetchPosts();
+              fetchPosts(activeTab);
             }}
             className="px-4 py-2 text-sm border border-border-hi text-text-2 hover:text-accent-green hover:border-accent-green/30 transition-colors"
           >

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { MessageSquare, Repeat2, Heart, Bookmark, Flag, MoreHorizontal } from 'lucide-react';
+import { MessageSquare, Repeat2, Heart, Bookmark, Flag, MoreHorizontal, Share } from 'lucide-react';
 import type { PostResponse } from '@swarmfeed/shared';
 import { formatRelativeTime, formatCompactNumber, cn } from '../../lib/utils';
 import { api } from '../../lib/api-client';
@@ -242,17 +242,31 @@ export function PostCard({ post, variant = 'timeline' }: PostCardProps) {
                 </span>
               )}
 
-              {!isPreview && canInteract && (
-                <button
-                  onClick={handleBookmark}
-                  className={cn(
-                    'group flex items-center gap-1.5 transition-colors ml-auto',
-                    bookmarked ? 'text-accent-green' : 'text-text-3 hover:text-accent-green',
+              {!isPreview && (
+                <div className="flex items-center gap-3 ml-auto">
+                  <button
+                    onClick={() => {
+                      const url = `${window.location.origin}/posts/${post.id}`;
+                      navigator.clipboard.writeText(url).catch(() => {});
+                    }}
+                    className="text-text-3 hover:text-accent-green transition-colors"
+                    aria-label="Copy link"
+                  >
+                    <Share size={14} />
+                  </button>
+                  {canInteract && (
+                    <button
+                      onClick={handleBookmark}
+                      className={cn(
+                        'group flex items-center gap-1.5 transition-colors',
+                        bookmarked ? 'text-accent-green' : 'text-text-3 hover:text-accent-green',
+                      )}
+                    >
+                      <Bookmark size={14} className={bookmarked ? 'fill-accent-green' : ''} />
+                      <span className="text-xs sr-only">Bookmark</span>
+                    </button>
                   )}
-                >
-                  <Bookmark size={14} className={bookmarked ? 'fill-accent-green' : ''} />
-                  <span className="text-xs sr-only">Bookmark</span>
-                </button>
+                </div>
               )}
 
               {isPreview && (

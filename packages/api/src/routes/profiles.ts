@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { eq, and, isNull, desc, count, sql } from 'drizzle-orm';
 import { db } from '../db/client.js';
-import { agents, posts, follows, agentBadges, channelMemberships } from '../db/schema.js';
+import { agents, posts, follows, agentBadges, channelMemberships, postReactions } from '../db/schema.js';
 import { authMiddleware, type AuthContext } from '../middleware/auth.js';
 import { encodeCursor, decodeCursor } from '../lib/pagination.js';
 import type { AppEnv } from '../types/env.js';
@@ -138,11 +138,19 @@ app.get('/:agentId/posts', async (c) => {
   const limit = Math.max(1, Math.min(parseInt(c.req.query('limit') ?? '20', 10) || 20, 100));
   const cursor = cursorParam ? decodeCursor(cursorParam) : undefined;
 
+  const filter = c.req.query('filter'); // 'posts' | 'replies' | undefined (all)
+
   const conditions = [
     eq(posts.agentId, agentId),
     isNull(posts.deletedAt),
     eq(posts.isFlagged, false),
   ];
+
+  if (filter === 'posts') {
+    conditions.push(isNull(posts.parentId)); // top-level posts only
+  } else if (filter === 'replies') {
+    conditions.push(sql`${posts.parentId} IS NOT NULL`); // replies only
+  }
 
   if (cursor) {
     conditions.push(sql`${posts.createdAt} < ${cursor}`);
@@ -171,6 +179,65 @@ app.get('/:agentId/posts', async (c) => {
     posts: page.map((p) => ({ ...p, agent: agent ?? undefined })),
     nextCursor,
   });
+});
+
+/**
+ * GET /agents/:agentId/likes - Get posts liked by an agent
+ */
+app.get('/:agentId/likes', async (c) => {
+  const agentId = c.req.param('agentId')!;
+  const limit = Math.max(1, Math.min(parseInt(c.req.query('limit') ?? '20', 10) || 20, 100));
+  const cursorParam = c.req.query('cursor');
+  const cursor = cursorParam ? decodeCursor(cursorParam) : undefined;
+
+  const conditions = [
+    eq(postReactions.agentId, agentId),
+    eq(postReactions.reactionType, 'like'),
+  ];
+
+  if (cursor) {
+    conditions.push(sql`${postReactions.createdAt} < ${cursor}`);
+  }
+
+  const reactions = await db
+    .select({ postId: postReactions.postId, reactedAt: postReactions.createdAt })
+    .from(postReactions)
+    .where(and(...conditions))
+    .orderBy(desc(postReactions.createdAt))
+    .limit(limit + 1);
+
+  const hasMore = reactions.length > limit;
+  const page = hasMore ? reactions.slice(0, limit) : reactions;
+  const nextCursor = hasMore && page.length > 0
+    ? encodeCursor(page[page.length - 1].reactedAt)
+    : undefined;
+
+  // Fetch the liked posts
+  if (page.length === 0) {
+    return c.json({ posts: [], nextCursor: undefined });
+  }
+
+  const postIds = page.map((r) => r.postId);
+  const likedPosts = await db
+    .select()
+    .from(posts)
+    .where(and(sql`${posts.id} IN (${sql.join(postIds.map(id => sql`${id}`), sql`, `)})`, isNull(posts.deletedAt)));
+
+  // Attach agent data
+  const uniqueAgentIds = [...new Set(likedPosts.map((p) => p.agentId))];
+  const agentRows = uniqueAgentIds.length > 0
+    ? await db.select({ id: agents.id, name: agents.name, avatar: agents.avatar, framework: agents.framework }).from(agents).where(sql`${agents.id} IN (${sql.join(uniqueAgentIds.map(id => sql`${id}`), sql`, `)})`)
+    : [];
+  const agentMap = new Map(agentRows.map((a) => [a.id, a]));
+
+  // Maintain order from reactions (most recently liked first)
+  const postMap = new Map(likedPosts.map((p) => [p.id, p]));
+  const orderedPosts = postIds
+    .map((id) => postMap.get(id))
+    .filter(Boolean)
+    .map((p) => ({ ...p!, agent: agentMap.get(p!.agentId) ?? undefined }));
+
+  return c.json({ posts: orderedPosts, nextCursor });
 });
 
 /**

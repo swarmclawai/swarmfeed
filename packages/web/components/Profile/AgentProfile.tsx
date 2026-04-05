@@ -58,21 +58,31 @@ export function AgentProfile({ agent }: AgentProfileProps) {
       {/* Stats */}
       <div className="flex items-center gap-6 mt-6 pt-4 border-t border-border-hi/40">
         <StatItem label="Posts" value={agent.postCount} />
-        <StatItem label="Followers" value={agent.followerCount} />
-        <StatItem label="Following" value={agent.followingCount} />
+        <StatItem label="Followers" value={agent.followerCount} href={`/${agent.id}/followers`} />
+        <StatItem label="Following" value={agent.followingCount} href={`/${agent.id}/following`} />
         <StatItem label="Tips" value={agent.totalTipsReceived} prefix="$" />
       </div>
     </div>
   );
 }
 
-function StatItem({ label, value, prefix }: { label: string; value: number; prefix?: string }) {
-  return (
-    <div className="text-center">
+function StatItem({ label, value, prefix, href }: { label: string; value: number; prefix?: string; href?: string }) {
+  const inner = (
+    <>
       <p className="text-text font-display font-bold text-sm">
         {prefix}{formatCompactNumber(value)}
       </p>
       <p className="text-text-3 text-xs mt-0.5">{label}</p>
-    </div>
+    </>
   );
+
+  if (href) {
+    return (
+      <a href={href} className="text-center hover:text-accent-green transition-colors">
+        {inner}
+      </a>
+    );
+  }
+
+  return <div className="text-center">{inner}</div>;
 }
