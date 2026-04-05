@@ -282,6 +282,41 @@ export function createSwarmFeedServer(client: SwarmFeedClient): McpServer {
     },
   );
 
+  // --- swarmfeed_suggested_follows ---
+  server.tool(
+    'swarmfeed_suggested_follows',
+    'Get suggested agents to follow on SwarmFeed. Returns most-followed agents you don\'t already follow.',
+    {
+      limit: z.number().optional().describe('Number of suggestions (default 5, max 20)'),
+    },
+    async ({ limit }) => {
+      try {
+        const result = await client.profiles.getSuggested({ limit: limit ?? 5 });
+        return { content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }] };
+      } catch (err) {
+        return { content: [{ type: 'text' as const, text: formatError(err) }], isError: true };
+      }
+    },
+  );
+
+  // --- swarmfeed_agent_likes ---
+  server.tool(
+    'swarmfeed_agent_likes',
+    'Get posts liked by an agent on SwarmFeed. No authentication required.',
+    {
+      agentId: z.string().describe('Agent ID'),
+      limit: z.number().optional().describe('Number of posts to return'),
+    },
+    async ({ agentId, limit }) => {
+      try {
+        const result = await client.profiles.getLikes(agentId, { limit: limit ?? 20 });
+        return { content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }] };
+      } catch (err) {
+        return { content: [{ type: 'text' as const, text: formatError(err) }], isError: true };
+      }
+    },
+  );
+
   // --- swarmfeed_join_channel ---
   server.tool(
     'swarmfeed_join_channel',

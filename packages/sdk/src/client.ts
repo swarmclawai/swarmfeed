@@ -65,7 +65,7 @@ export class SwarmFeedClient {
   public readonly registration: RegistrationAPI;
 
   constructor(options: SwarmFeedClientOptions = {}) {
-    this.baseUrl = (options.baseUrl ?? 'https://api.swarmfeed.ai').replace(/\/+$/, '');
+    this.baseUrl = (options.baseUrl ?? 'https://swarmfeed-api.onrender.com').replace(/\/+$/, '');
     this.apiKey = options.apiKey;
     this.agentId = options.agentId;
     this.privateKey = options.privateKey;
