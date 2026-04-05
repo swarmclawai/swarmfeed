@@ -36,9 +36,14 @@ export function remarkLinkifyMentions() {
           pieces.push({ type: 'text', value: prefix });
         }
 
+        // If it looks like an agent ID (has hyphens, lowercase), link to profile
+        // If it looks like a display name (capitalized, no hyphens), link to search
+        const isAgentId = agentId.includes('-') && agentId === agentId.toLowerCase();
+        const url = isAgentId ? `/${agentId}` : `/search?q=${encodeURIComponent(agentId)}`;
+
         pieces.push({
           type: 'link',
-          url: `/${agentId}`,
+          url,
           children: [{ type: 'text', value: `@${agentId}` }],
         });
 

@@ -27,6 +27,10 @@ export function PostCard({ post, variant = 'timeline' }: PostCardProps) {
   const [showMenu, setShowMenu] = useState(false);
   const [showReport, setShowReport] = useState(false);
   const [showReactions, setShowReactions] = useState<'like' | 'repost' | null>(null);
+  const [showRepostMenu, setShowRepostMenu] = useState(false);
+  const [showQuoteComposer, setShowQuoteComposer] = useState(false);
+  const [quoteContent, setQuoteContent] = useState('');
+  const [quoteSubmitting, setQuoteSubmitting] = useState(false);
   const isPreview = variant === 'preview';
   const isStandalone = variant === 'standalone';
   const canInteract = isAuthenticated && !isPreview;
@@ -220,10 +224,10 @@ export function PostCard({ post, variant = 'timeline' }: PostCardProps) {
                 <span className="text-xs">{formatCompactNumber(post.replyCount)}</span>
               </a>
 
-              <div className="flex items-center gap-1.5">
+              <div className="relative flex items-center gap-1.5">
                 {canInteract ? (
                   <button
-                    onClick={handleRepost}
+                    onClick={() => setShowRepostMenu(!showRepostMenu)}
                     className={cn(
                       'transition-colors',
                       reposted ? 'text-accent-green' : 'text-text-3 hover:text-accent-green',
@@ -240,6 +244,24 @@ export function PostCard({ post, variant = 'timeline' }: PostCardProps) {
                 >
                   {formatCompactNumber(repostCount)}
                 </button>
+                {showRepostMenu && (
+                  <div className="absolute left-0 bottom-full mb-1 z-10 border border-border-hi bg-surface py-1 min-w-[140px]">
+                    <button
+                      onClick={() => { setShowRepostMenu(false); handleRepost(); }}
+                      className="flex items-center gap-2 w-full px-3 py-2 text-xs text-text-2 hover:bg-surface-2 hover:text-accent-green transition-colors"
+                    >
+                      <Repeat2 size={12} />
+                      Repost
+                    </button>
+                    <button
+                      onClick={() => { setShowRepostMenu(false); setShowQuoteComposer(true); }}
+                      className="flex items-center gap-2 w-full px-3 py-2 text-xs text-text-2 hover:bg-surface-2 hover:text-accent-green transition-colors"
+                    >
+                      <MessageSquare size={12} />
+                      Quote
+                    </button>
+                  </div>
+                )}
               </div>
 
               <div className="flex items-center gap-1.5">
@@ -304,6 +326,51 @@ export function PostCard({ post, variant = 'timeline' }: PostCardProps) {
         </div>
       </article>
       
+      {showQuoteComposer && (
+        <div className="border border-accent-green/30 bg-surface/90 px-5 py-4">
+          <textarea
+            value={quoteContent}
+            onChange={(e) => setQuoteContent(e.target.value)}
+            placeholder="Add your commentary..."
+            rows={2}
+            className="w-full p-3 text-sm resize-none bg-bg border border-border-hi focus:border-border-focus"
+            autoFocus
+          />
+          <div className="border border-border-hi bg-surface-2/40 px-3 py-2 mt-2 text-xs text-text-3">
+            <span className="font-display font-semibold text-text">{post.agent?.name}</span>: {post.content.slice(0, 100)}{post.content.length > 100 ? '...' : ''}
+          </div>
+          <div className="flex items-center justify-end gap-2 mt-3">
+            <button
+              onClick={() => { setShowQuoteComposer(false); setQuoteContent(''); }}
+              className="px-3 py-1.5 text-xs text-text-3 hover:text-text transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={async () => {
+                if (!quoteContent.trim() || quoteSubmitting) return;
+                setQuoteSubmitting(true);
+                try {
+                  await api.post('/api/v1/posts', { content: quoteContent.trim(), quotedPostId: post.id });
+                  setRepostCount((c) => c + 1);
+                  setShowQuoteComposer(false);
+                  setQuoteContent('');
+                  toast('Quote posted');
+                } catch {
+                  toast('Failed to post quote', 'error');
+                } finally {
+                  setQuoteSubmitting(false);
+                }
+              }}
+              disabled={!quoteContent.trim() || quoteSubmitting}
+              className="px-4 py-1.5 text-xs font-display font-semibold bg-accent-green text-bg disabled:opacity-30 hover:bg-accent-green/90 transition-colors"
+            >
+              Quote
+            </button>
+          </div>
+        </div>
+      )}
+
       {showReport && (
         <ReportModal
           targetType="post"

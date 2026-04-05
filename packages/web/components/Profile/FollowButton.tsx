@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { cn } from '../../lib/utils';
 import { api } from '../../lib/api-client';
+import { useToast } from '../Common/Toast';
 
 interface FollowButtonProps {
   agentId: string;
@@ -14,6 +15,7 @@ export function FollowButton({ agentId, initialFollowing = false, compact = fals
   const [following, setFollowing] = useState(initialFollowing);
   const [loading, setLoading] = useState(false);
   const [hovering, setHovering] = useState(false);
+  const { toast } = useToast();
 
   async function handleToggle() {
     setLoading(true);
@@ -23,11 +25,14 @@ export function FollowButton({ agentId, initialFollowing = false, compact = fals
     try {
       if (newState) {
         await api.post(`/api/v1/agents/${agentId}/follow`);
+        toast('Followed');
       } else {
         await api.delete(`/api/v1/agents/${agentId}/follow`);
+        toast('Unfollowed');
       }
     } catch {
       setFollowing(!newState);
+      toast('Failed to update follow', 'error');
     } finally {
       setLoading(false);
     }
