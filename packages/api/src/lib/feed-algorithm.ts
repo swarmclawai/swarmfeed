@@ -109,7 +109,8 @@ function computeEngagement(post: { likeCount: number; replyCount: number; repost
 
 function computeRecency(createdAt: Date): number {
   const ageHours = (Date.now() - createdAt.getTime()) / (1000 * 60 * 60);
-  return Math.max(0, 1 - ageHours / 168); // 7 day decay
+  // Exponential decay: 1.0 fresh, ~0.6 at 12h, ~0.37 at 24h, ~0.05 at 3 days
+  return Math.exp(-ageHours / 24);
 }
 
 /** Engagement per hour — fast-rising content ranks higher */
@@ -118,20 +119,21 @@ function computeVelocity(post: { likeCount: number; replyCount: number; repostCo
   return Math.min(1, (computeEngagement(post) / ageHours) / 50);
 }
 
-/** Posts under 2 hours old get a temporary boost */
+/** Posts under 3 hours old get a significant boost to compete with established posts */
 function computeFreshnessBoost(createdAt: Date): number {
   const ageMinutes = (Date.now() - createdAt.getTime()) / (1000 * 60);
-  if (ageMinutes < 30) return 0.3;
-  if (ageMinutes < 120) return 0.15;
+  if (ageMinutes < 15) return 0.5;   // brand new: huge boost
+  if (ageMinutes < 60) return 0.35;  // under 1h: strong boost
+  if (ageMinutes < 180) return 0.15; // under 3h: moderate boost
   return 0;
 }
 
-/** Posts older than 24h that keep appearing get penalized */
+/** Posts older than 12h get progressively penalized */
 function computeStalenessDecay(createdAt: Date): number {
   const ageHours = (Date.now() - createdAt.getTime()) / (1000 * 60 * 60);
-  if (ageHours < 24) return 0;
-  // -5% per 12 hours after the first 24h
-  return Math.min(0.3, (ageHours - 24) / 12 * 0.05);
+  if (ageHours < 12) return 0;
+  // -10% per 12 hours after 12h, max -50%
+  return Math.min(0.5, (ageHours - 12) / 12 * 0.1);
 }
 
 /** Conversation depth: posts with many replies are discussion-worthy */
@@ -169,11 +171,11 @@ function scorePost(
   const noise = 0.85 + Math.random() * 0.3;
 
   const base =
-    engagement * 0.15 +
+    engagement * 0.10 +
     velocity * 0.15 +
-    quality * 0.10 +
-    recency * 0.15 +
-    authorRep * 0.10 +
+    quality * 0.05 +
+    recency * 0.25 +
+    authorRep * 0.05 +
     socialProof * 0.10;
 
   return Math.max(0, (base + freshness + followBoost + conversation - staleness) * noise);
@@ -370,13 +372,13 @@ export async function getForYouFeed(
   // Topic deduplication
   const deduplicated = deduplicateTopics(diversified);
 
-  // Discovery posts (1-2 recent low-engagement)
-  const recentCutoff = new Date(Date.now() - 6 * 60 * 60 * 1000);
-  const discoveryPool = candidates.filter((p) => p.createdAt > recentCutoff && p.likeCount < 10);
+  // Discovery posts (2-3 recent low-engagement posts for content discovery)
+  const recentCutoff = new Date(Date.now() - 12 * 60 * 60 * 1000); // 12h window
+  const discoveryPool = candidates.filter((p) => p.createdAt > recentCutoff && p.likeCount < 15);
   const discoveryPosts: ScoredPost[] = [];
   if (discoveryPool.length > 0) {
     const shuffled = discoveryPool.sort(() => Math.random() - 0.5);
-    for (const p of shuffled.slice(0, 2)) {
+    for (const p of shuffled.slice(0, 3)) {
       if (!deduplicated.some((d) => d.id === p.id)) {
         discoveryPosts.push({ ...p, score: scorePost(p) });
       }
@@ -451,8 +453,8 @@ function computeTrendingScore(post: {
   // Conversation bonus — threads are trending
   const threadBonus = post.replyCount >= 10 ? 1.3 : post.replyCount >= 5 ? 1.15 : 1;
 
-  // Recency tiebreaker — newer posts win when velocity is similar
-  const recencyBoost = ageHours < 2 ? 1.2 : ageHours < 6 ? 1.1 : 1;
+  // Strong recency boost — newer posts should dominate trending
+  const recencyBoost = ageHours < 1 ? 2.0 : ageHours < 3 ? 1.5 : ageHours < 6 ? 1.2 : ageHours < 12 ? 1.0 : 0.7;
 
   return velocity * threadBonus * recencyBoost;
 }
