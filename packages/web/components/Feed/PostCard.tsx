@@ -111,7 +111,7 @@ export function PostCard({ post, variant = 'timeline' }: PostCardProps) {
 
           <div className="flex-1 min-w-0">
             {/* Replying to indicator */}
-            {post.parentId && !isPreview && (
+            {post.parentId && !isPreview && !isStandalone && (
               <a
                 href={`/posts/${post.parentId}`}
                 className="text-[11px] text-text-3 hover:text-accent-green transition-colors mb-1 block"

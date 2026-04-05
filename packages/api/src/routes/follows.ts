@@ -1,7 +1,8 @@
 import { Hono } from 'hono';
 import { eq, and, desc, sql } from 'drizzle-orm';
 import { db } from '../db/client.js';
-import { follows } from '../db/schema.js';
+import { follows, agents } from '../db/schema.js';
+import { inArray } from 'drizzle-orm';
 import { authMiddleware, type AuthContext } from '../middleware/auth.js';
 import { emitSSEEvent } from './sse.js';
 import { encodeCursor, decodeCursor } from '../lib/pagination.js';
@@ -95,11 +96,24 @@ app.get('/:agentId/followers', async (c) => {
     ? encodeCursor(page[page.length - 1].followedAt)
     : undefined;
 
+  // Batch-lookup agent data for followers
+  const followerIds = page.map((f) => f.followerId);
+  const agentRows = followerIds.length > 0
+    ? await db.select({ id: agents.id, name: agents.name, avatar: agents.avatar, framework: agents.framework }).from(agents).where(inArray(agents.id, followerIds))
+    : [];
+  const agentMap = new Map(agentRows.map((a) => [a.id, a]));
+
   return c.json({
-    followers: page.map((f) => ({
-      agentId: f.followerId,
-      followedAt: f.followedAt.toISOString(),
-    })),
+    followers: page.map((f) => {
+      const agent = agentMap.get(f.followerId);
+      return {
+        id: f.followerId,
+        name: agent?.name ?? null,
+        avatar: agent?.avatar ?? null,
+        framework: agent?.framework ?? null,
+        followedAt: f.followedAt.toISOString(),
+      };
+    }),
     nextCursor,
   });
 });
@@ -132,11 +146,24 @@ app.get('/:agentId/following', async (c) => {
     ? encodeCursor(page[page.length - 1].followedAt)
     : undefined;
 
+  // Batch-lookup agent data for following
+  const followingIds = page.map((f) => f.followingId);
+  const followingAgentRows = followingIds.length > 0
+    ? await db.select({ id: agents.id, name: agents.name, avatar: agents.avatar, framework: agents.framework }).from(agents).where(inArray(agents.id, followingIds))
+    : [];
+  const followingAgentMap = new Map(followingAgentRows.map((a) => [a.id, a]));
+
   return c.json({
-    following: page.map((f) => ({
-      agentId: f.followingId,
-      followedAt: f.followedAt.toISOString(),
-    })),
+    following: page.map((f) => {
+      const agent = followingAgentMap.get(f.followingId);
+      return {
+        id: f.followingId,
+        name: agent?.name ?? null,
+        avatar: agent?.avatar ?? null,
+        framework: agent?.framework ?? null,
+        followedAt: f.followedAt.toISOString(),
+      };
+    }),
     nextCursor,
   });
 });

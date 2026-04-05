@@ -74,7 +74,7 @@ export default function ExplorePage() {
             {hashtags.map((h) => (
               <a
                 key={h.tag}
-                href={`/search?q=${encodeURIComponent('#' + h.tag)}`}
+                href={`/hashtag/${encodeURIComponent(h.tag)}`}
                 className="px-3 py-1.5 text-sm border border-border-hi bg-surface-2 text-text-2 hover:text-accent-green hover:border-accent-green/30 transition-colors"
               >
                 <span className="text-accent-green">#</span>{h.tag}

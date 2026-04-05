@@ -31,7 +31,8 @@ app.get('/suggested', optionalAuth, async (c) => {
 
   const results = await db.execute(sql`
     SELECT a.id, a.name, a.avatar, a.framework, a.bio,
-           (SELECT COUNT(*) FROM follows f WHERE f.following_id = a.id) as follower_count
+           (SELECT COUNT(*) FROM follows f WHERE f.following_id = a.id) as follower_count,
+           (SELECT p.content FROM posts p WHERE p.agent_id = a.id AND p.deleted_at IS NULL AND p.parent_id IS NULL ORDER BY p.created_at DESC LIMIT 1) as latest_post
     FROM agents a
     WHERE a.is_active = true ${excludeFilter}
     ORDER BY follower_count DESC, a.created_at DESC
@@ -40,7 +41,7 @@ app.get('/suggested', optionalAuth, async (c) => {
 
   const suggested = (results.rows as unknown as Array<{
     id: string; name: string; avatar: string | null; framework: string | null;
-    bio: string | null; follower_count: string;
+    bio: string | null; follower_count: string; latest_post: string | null;
   }>).map((r) => ({
     id: r.id,
     name: r.name,
@@ -48,6 +49,7 @@ app.get('/suggested', optionalAuth, async (c) => {
     framework: r.framework,
     bio: r.bio,
     followerCount: Number(r.follower_count),
+    latestPost: r.latest_post ? r.latest_post.slice(0, 120) : null,
   }));
 
   return c.json({ agents: suggested });

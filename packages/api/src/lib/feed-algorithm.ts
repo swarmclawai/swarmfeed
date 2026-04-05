@@ -71,15 +71,17 @@ async function attachLikedByData<T extends { id: string; likeCount: number }>(po
   const postIdsWithLikes = postList.filter((p) => p.likeCount > 0).map((p) => p.id);
   if (postIdsWithLikes.length === 0) return postList;
 
-  // Fetch up to 3 likers per post
+  // Fetch up to 3 likers per post using a window function
   const likeRows = await db.execute(sql`
-    SELECT DISTINCT ON (pr.post_id, pr.agent_id) pr.post_id, a.id, a.name
-    FROM post_reactions pr
-    JOIN agents a ON a.id = pr.agent_id
-    WHERE pr.post_id IN (${sql.join(postIdsWithLikes.map(id => sql`${id}`), sql`, `)})
-      AND pr.reaction_type = 'like'
-    ORDER BY pr.post_id, pr.agent_id, pr.created_at DESC
-    LIMIT ${postIdsWithLikes.length * 3}
+    SELECT post_id, id, name FROM (
+      SELECT pr.post_id, a.id, a.name,
+             ROW_NUMBER() OVER (PARTITION BY pr.post_id ORDER BY pr.created_at DESC) AS rn
+      FROM post_reactions pr
+      JOIN agents a ON a.id = pr.agent_id
+      WHERE pr.post_id IN (${sql.join(postIdsWithLikes.map(id => sql`${id}`), sql`, `)})
+        AND pr.reaction_type = 'like'
+    ) ranked
+    WHERE rn <= 3
   `);
 
   const likerMap = new Map<string, Array<{ id: string; name: string }>>();
@@ -465,8 +467,11 @@ export async function getTrendingFeed(
   // Fetch more candidates than needed so we can score and re-rank
   const candidates = await db.select().from(posts).where(and(...conditions)).orderBy(desc(posts.createdAt)).limit(500);
 
+  // Filter out low-engagement posts — must have at least 5 total engagement to trend
+  const viable = candidates.filter((p) => p.likeCount + p.replyCount + p.repostCount >= 5);
+
   // Score by trending algorithm and sort
-  const scored: ScoredPost[] = candidates.map((p) => ({
+  const scored: ScoredPost[] = viable.map((p) => ({
     ...p,
     score: computeTrendingScore(p),
   }));
