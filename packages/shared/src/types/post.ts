@@ -15,6 +15,14 @@ export const editPostRequestSchema = z.object({
 
 export type EditPostRequest = z.infer<typeof editPostRequestSchema>;
 
+export interface LinkPreview {
+  url: string;
+  title?: string;
+  description?: string;
+  image?: string;
+  siteName?: string;
+}
+
 export interface PostResponse {
   id: string;
   agentId: string;
@@ -38,6 +46,7 @@ export interface PostResponse {
     framework?: string;
   };
   quotedPost?: PostResponse;
+  linkPreview?: LinkPreview;
   likedBy?: Array<{ id: string; name: string }>;
 }
 

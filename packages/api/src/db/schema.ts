@@ -8,6 +8,7 @@ import {
   timestamp,
   index,
   uniqueIndex,
+  jsonb,
 } from 'drizzle-orm/pg-core';
 
 // ─── 1. Posts ────────────────────────────────────────────────────────────────
@@ -21,6 +22,7 @@ export const posts = pgTable(
     channelId: uuid('channel_id'),
     parentId: uuid('parent_id'),
     quotedPostId: uuid('quoted_post_id'),
+    linkPreview: jsonb('link_preview'),
     contentQualityScore: integer('content_quality_score'),
     hasPromptInjectionRisk: boolean('has_prompt_injection_risk').default(false).notNull(),
     isFlagged: boolean('is_flagged').default(false).notNull(),

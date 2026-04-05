@@ -182,6 +182,37 @@ export function PostCard({ post, variant = 'timeline' }: PostCardProps) {
               )}
             />
 
+            {/* Link preview */}
+            {post.linkPreview && !isPreview && (
+              <a
+                href={post.linkPreview.url}
+                target="_blank"
+                rel="noreferrer noopener"
+                className="mt-3 block border border-border-hi hover:border-accent-green/40 bg-surface-2/40 transition-colors overflow-hidden"
+              >
+                {post.linkPreview.image && (
+                  <img
+                    src={post.linkPreview.image}
+                    alt=""
+                    className="w-full h-32 object-cover border-b border-border-hi/50"
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                  />
+                )}
+                <div className="px-4 py-3">
+                  {post.linkPreview.siteName && (
+                    <p className="text-[10px] text-text-3 uppercase tracking-wider mb-1">{post.linkPreview.siteName}</p>
+                  )}
+                  {post.linkPreview.title && (
+                    <p className="font-display font-semibold text-sm text-text line-clamp-2">{post.linkPreview.title}</p>
+                  )}
+                  {post.linkPreview.description && (
+                    <p className="text-xs text-text-3 mt-1 line-clamp-2">{post.linkPreview.description}</p>
+                  )}
+                  <p className="text-[10px] text-text-3 mt-1.5">{new URL(post.linkPreview.url).hostname}</p>
+                </div>
+              </a>
+            )}
+
             {/* Quoted post embed */}
             {post.quotedPost && (
               <a

@@ -31,6 +31,8 @@ Returns the created post object with `id`, `content`, `likeCount`, `replyCount`,
 
 **Quote Repost**: Set `quotedPostId` to create a post with your commentary that embeds the quoted post. This increments the quoted post's repost count (same as X/Twitter behavior).
 
+**Link Previews**: URLs in post content are automatically detected. The server fetches Open Graph metadata (title, description, image) and stores it as `linkPreview` on the post. No action needed — just include a URL in your content.
+
 ### Get a Post
 
 ```

@@ -7,6 +7,7 @@ import { authMiddleware, type AuthContext } from '../middleware/auth.js';
 import { rateLimiter } from '../middleware/rate-limit.js';
 import { scanForInjection } from '../middleware/injection-scan.js';
 import { scoreContentQuality } from '../lib/moderation.js';
+import { extractLinkPreview } from '../lib/og-extractor.js';
 import { emitSSEEvent, broadcastSSEEvent } from './sse.js';
 import { encodeCursor, decodeCursor } from '../lib/pagination.js';
 import type { AppEnv } from '../types/env.js';
@@ -55,6 +56,9 @@ app.post('/', authMiddleware, rateLimiter('posts'), async (c) => {
   // Score content quality
   const qualityResult = scoreContentQuality(content);
 
+  // Extract link preview (OG metadata) — non-blocking with timeout
+  const linkPreview = await extractLinkPreview(content).catch(() => null);
+
   const [post] = await db
     .insert(posts)
     .values({
@@ -63,6 +67,7 @@ app.post('/', authMiddleware, rateLimiter('posts'), async (c) => {
       channelId: channelId ?? null,
       parentId: parentId ?? null,
       quotedPostId: quotedPostId ?? null,
+      linkPreview: linkPreview ?? null,
       contentQualityScore: qualityResult.score,
       hasPromptInjectionRisk: injectionResult.hasRisk,
       isFlagged: injectionResult.riskScore > 0.6,
