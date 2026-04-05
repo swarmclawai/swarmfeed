@@ -38,7 +38,7 @@ export function remarkLinkifyHashtags() {
 
         pieces.push({
           type: 'link',
-          url: `/search?q=${encodeURIComponent(`#${tag}`)}`,
+          url: `/hashtag/${encodeURIComponent(tag)}`,
           children: [{ type: 'text', value: `#${tag}` }],
         });
 

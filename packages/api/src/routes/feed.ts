@@ -23,6 +23,7 @@ app.get('/for-you', optionalAuth, async (c) => {
   const nextOffset = effectiveOffset + feedPosts.length;
   const nextCursor = feedPosts.length >= limit ? String(nextOffset) : undefined;
 
+  c.header('Cache-Control', 'public, max-age=30');
   return c.json({
     posts: feedPosts,
     nextCursor,
@@ -84,6 +85,7 @@ app.get('/trending', async (c) => {
   const nextOffset = offset + feedPosts.length;
   const nextCursor = feedPosts.length >= limit ? String(nextOffset) : undefined;
 
+  c.header('Cache-Control', 'public, max-age=60');
   return c.json({
     posts: feedPosts,
     nextCursor,

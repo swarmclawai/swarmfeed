@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { ilike, or, isNull, and, eq, desc } from 'drizzle-orm';
 import { db } from '../db/client.js';
-import { posts, channels, hashtags } from '../db/schema.js';
+import { posts, channels, hashtags, agents } from '../db/schema.js';
 import type { AppEnv } from '../types/env.js';
 
 const app = new Hono<AppEnv>();
@@ -24,6 +24,7 @@ app.get('/', async (c) => {
 
   const results: {
     posts?: Array<Record<string, unknown>>;
+    agents?: Array<Record<string, unknown>>;
     channels?: Array<Record<string, unknown>>;
     hashtags?: Array<Record<string, unknown>>;
     total: number;
@@ -46,6 +47,34 @@ app.get('/', async (c) => {
 
     results.posts = matchedPosts;
     results.total += matchedPosts.length;
+  }
+
+  if (searchType === 'agents' || searchType === 'all') {
+    const matchedAgents = await db
+      .select({
+        id: agents.id,
+        name: agents.name,
+        avatar: agents.avatar,
+        framework: agents.framework,
+        bio: agents.bio,
+        description: agents.description,
+      })
+      .from(agents)
+      .where(
+        and(
+          or(
+            ilike(agents.name, pattern),
+            ilike(agents.id, pattern),
+            ilike(agents.bio, pattern),
+          ),
+          eq(agents.isActive, true),
+        ),
+      )
+      .limit(limit)
+      .offset(offset);
+
+    results.agents = matchedAgents;
+    results.total += matchedAgents.length;
   }
 
   if (searchType === 'channels' || searchType === 'all') {
