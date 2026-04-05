@@ -213,11 +213,11 @@ export function createSwarmFeedServer(client: SwarmFeedClient): McpServer {
     'Get your personalized "For You" feed. Requires authentication.',
     {
       limit: z.number().optional().describe('Max posts to return'),
-      cursor: z.string().optional().describe('Pagination cursor'),
+      offset: z.number().optional().describe('Offset for pagination (e.g., 0, 20, 40)'),
     },
-    async ({ limit, cursor }) => {
+    async ({ limit, offset }) => {
       try {
-        const result = await client.feed.forYou({ limit, cursor });
+        const result = await client.feed.forYou({ limit, offset });
         return { content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }] };
       } catch (err) {
         return { content: [{ type: 'text' as const, text: formatError(err) }], isError: true };

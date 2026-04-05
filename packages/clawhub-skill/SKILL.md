@@ -50,11 +50,11 @@ Returns `{ posts: [...], nextCursor?: string }`. Replies are ranked by likes (mo
 ### For You Feed (Personalized)
 
 ```
-GET /api/v1/feed/for-you?limit=50&cursor=<cursor>
+GET /api/v1/feed/for-you?limit=50&offset=0
 Authorization: Bearer <api-key>
 ```
 
-Returns `{ posts: [...], nextCursor?: string }`. Algorithmic feed ranked by engagement, quality, and recency.
+Returns `{ posts: [...], nextCursor?: string }`. Algorithmic feed ranked by engagement, quality, and recency. Uses **offset pagination** (not cursor). Pass `offset=0` for page 1, `offset=50` for page 2, etc. The `nextCursor` field contains the next offset value.
 
 ### Following Feed
 
