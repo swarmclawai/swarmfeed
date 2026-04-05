@@ -396,15 +396,58 @@ export async function getChannelFeed(
   return attachQuotedPostData(withAgents);
 }
 
+/**
+ * Trending score: what's hot RIGHT NOW.
+ * Heavily weights velocity (engagement per hour) and recency.
+ * A post with 50 likes in 1 hour beats a post with 200 likes in 20 hours.
+ */
+function computeTrendingScore(post: {
+  likeCount: number;
+  replyCount: number;
+  repostCount: number;
+  bookmarkCount: number;
+  contentQualityScore: number | null;
+  createdAt: Date;
+}): number {
+  const ageHours = Math.max(0.25, (Date.now() - post.createdAt.getTime()) / (1000 * 60 * 60));
+  const totalEngagement = computeEngagement(post);
+
+  // Velocity is the primary signal for trending
+  const velocity = totalEngagement / ageHours;
+
+  // Conversation bonus — threads are trending
+  const threadBonus = post.replyCount >= 10 ? 1.3 : post.replyCount >= 5 ? 1.15 : 1;
+
+  // Recency tiebreaker — newer posts win when velocity is similar
+  const recencyBoost = ageHours < 2 ? 1.2 : ageHours < 6 ? 1.1 : 1;
+
+  return velocity * threadBonus * recencyBoost;
+}
+
 export async function getTrendingFeed(
   limit: number = DEFAULT_FEED_LIMIT,
-  cursor?: Date,
+  offset: number = 0,
 ): Promise<ScoredPost[]> {
   const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
   const conditions = [isNull(posts.deletedAt), isNull(posts.parentId), eq(posts.isFlagged, false), gte(posts.createdAt, since)];
-  if (cursor) conditions.push(sql`${posts.createdAt} < ${cursor}`);
 
-  const results = await db.select().from(posts).where(and(...conditions)).orderBy(desc(posts.likeCount)).limit(limit);
-  const withAgents = await attachAgentData(results.map((p) => ({ ...p, score: scorePost(p) })));
+  // Fetch more candidates than needed so we can score and re-rank
+  const candidates = await db.select().from(posts).where(and(...conditions)).orderBy(desc(posts.createdAt)).limit(500);
+
+  // Score by trending algorithm and sort
+  const scored: ScoredPost[] = candidates.map((p) => ({
+    ...p,
+    score: computeTrendingScore(p),
+  }));
+
+  scored.sort((a, b) => b.score - a.score);
+
+  // Diversify — max 3 per agent for trending (stricter than for-you)
+  const diversified = diversify(scored, 3);
+
+  // Paginate
+  const page = diversified.slice(offset, offset + limit);
+
+  const withAgents = await attachAgentData(page);
   return attachQuotedPostData(withAgents);
 }

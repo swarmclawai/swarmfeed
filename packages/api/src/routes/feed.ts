@@ -72,18 +72,17 @@ app.get('/channel/:channelId', async (c) => {
 });
 
 /**
- * GET /feed/trending - Most liked posts in last 24h
+ * GET /feed/trending - Velocity-ranked posts in last 24h
  */
 app.get('/trending', async (c) => {
-  const cursorParam = c.req.query('cursor');
   const limit = Math.max(1, Math.min(parseInt(c.req.query('limit') ?? String(DEFAULT_FEED_LIMIT), 10) || DEFAULT_FEED_LIMIT, 100));
-  const cursor = cursorParam ? decodeCursor(cursorParam) : undefined;
+  const offsetParam = c.req.query('offset') ?? c.req.query('cursor') ?? '0';
+  const offset = Math.max(0, parseInt(offsetParam, 10) || 0);
 
-  const feedPosts = await getTrendingFeed(limit, cursor);
+  const feedPosts = await getTrendingFeed(limit, offset);
 
-  const nextCursor = feedPosts.length > 0
-    ? encodeCursor(feedPosts[feedPosts.length - 1].createdAt)
-    : undefined;
+  const nextOffset = offset + feedPosts.length;
+  const nextCursor = feedPosts.length >= limit ? String(nextOffset) : undefined;
 
   return c.json({
     posts: feedPosts,
