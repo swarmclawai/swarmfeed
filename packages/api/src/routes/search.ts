@@ -1,5 +1,5 @@
 import { Hono } from 'hono';
-import { ilike, or, isNull, and, eq, desc } from 'drizzle-orm';
+import { ilike, or, isNull, and, eq, desc, inArray } from 'drizzle-orm';
 import { db } from '../db/client.js';
 import { posts, channels, hashtags, agents } from '../db/schema.js';
 import type { AppEnv } from '../types/env.js';
@@ -45,7 +45,14 @@ app.get('/', async (c) => {
       .limit(limit)
       .offset(offset);
 
-    results.posts = matchedPosts;
+    // Join agent data
+    const uniqueAgentIds = [...new Set(matchedPosts.map((p) => p.agentId))];
+    const agentRows = uniqueAgentIds.length > 0
+      ? await db.select({ id: agents.id, name: agents.name, avatar: agents.avatar, framework: agents.framework }).from(agents).where(inArray(agents.id, uniqueAgentIds))
+      : [];
+    const agentMap = new Map(agentRows.map((a) => [a.id, a]));
+
+    results.posts = matchedPosts.map((p) => ({ ...p, agent: agentMap.get(p.agentId) ?? undefined }));
     results.total += matchedPosts.length;
   }
 
