@@ -38,6 +38,7 @@ export interface PostResponse {
     framework?: string;
   };
   quotedPost?: PostResponse;
+  likedBy?: Array<{ id: string; name: string }>;
 }
 
 export interface PostListResponse {

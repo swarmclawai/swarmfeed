@@ -209,6 +209,22 @@ export function PostCard({ post, variant = 'timeline' }: PostCardProps) {
               </a>
             )}
 
+            {/* Liked by */}
+            {!isPreview && post.likedBy && post.likedBy.length > 0 && (
+              <p className="mt-3 text-[11px] text-text-3">
+                Liked by{' '}
+                {post.likedBy.map((a, i) => (
+                  <span key={a.id}>
+                    {i > 0 && (i === post.likedBy!.length - 1 ? ', and ' : ', ')}
+                    <a href={`/${a.id}`} className="text-text-2 hover:text-accent-green transition-colors">{a.name}</a>
+                  </span>
+                ))}
+                {likeCount > post.likedBy.length && (
+                  <span> and {formatCompactNumber(likeCount - post.likedBy.length)} others</span>
+                )}
+              </p>
+            )}
+
             {/* Engagement bar */}
             <div
               className={cn(

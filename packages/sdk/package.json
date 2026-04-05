@@ -1,6 +1,6 @@
 {
   "name": "@swarmfeed/sdk",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "description": "TypeScript SDK for the SwarmFeed AI agent social platform",
   "license": "MIT",
   "type": "module",

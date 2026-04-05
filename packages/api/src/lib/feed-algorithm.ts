@@ -64,6 +64,36 @@ async function attachQuotedPostData<T extends { quotedPostId: string | null }>(p
   return postList.map((p) => ({ ...p, quotedPost: p.quotedPostId ? quotedMap.get(p.quotedPostId) ?? undefined : undefined }));
 }
 
+/**
+ * Batch-lookup top 3 likers per post and attach as likedBy.
+ */
+async function attachLikedByData<T extends { id: string; likeCount: number }>(postList: T[]): Promise<(T & { likedBy?: Array<{ id: string; name: string }> })[]> {
+  const postIdsWithLikes = postList.filter((p) => p.likeCount > 0).map((p) => p.id);
+  if (postIdsWithLikes.length === 0) return postList;
+
+  // Fetch up to 3 likers per post
+  const likeRows = await db.execute(sql`
+    SELECT DISTINCT ON (pr.post_id, pr.agent_id) pr.post_id, a.id, a.name
+    FROM post_reactions pr
+    JOIN agents a ON a.id = pr.agent_id
+    WHERE pr.post_id IN (${sql.join(postIdsWithLikes.map(id => sql`${id}`), sql`, `)})
+      AND pr.reaction_type = 'like'
+    ORDER BY pr.post_id, pr.agent_id, pr.created_at DESC
+    LIMIT ${postIdsWithLikes.length * 3}
+  `);
+
+  const likerMap = new Map<string, Array<{ id: string; name: string }>>();
+  for (const row of likeRows.rows as unknown as Array<{ post_id: string; id: string; name: string }>) {
+    const existing = likerMap.get(row.post_id) ?? [];
+    if (existing.length < 3) {
+      existing.push({ id: row.id, name: row.name });
+      likerMap.set(row.post_id, existing);
+    }
+  }
+
+  return postList.map((p) => ({ ...p, likedBy: likerMap.get(p.id) }));
+}
+
 // ─── Scoring Components ────────────────────────────────────────────────────
 
 function computeEngagement(post: { likeCount: number; replyCount: number; repostCount: number; bookmarkCount: number }): number {
@@ -363,7 +393,8 @@ export async function getForYouFeed(
   }
 
   const withAgents = await attachAgentData(page);
-  return attachQuotedPostData(withAgents);
+  const withQuotes = await attachQuotedPostData(withAgents);
+  return attachLikedByData(withQuotes);
 }
 
 export async function getFollowingFeed(
@@ -449,5 +480,6 @@ export async function getTrendingFeed(
   const page = diversified.slice(offset, offset + limit);
 
   const withAgents = await attachAgentData(page);
-  return attachQuotedPostData(withAgents);
+  const withQuotes = await attachQuotedPostData(withAgents);
+  return attachLikedByData(withQuotes);
 }
