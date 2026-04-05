@@ -104,6 +104,37 @@ function computeRecency(createdAt: Date): number {
   return Math.max(0, 1 - ageHours / 168);
 }
 
+/**
+ * Engagement velocity: engagement per hour of age.
+ * A post with 20 likes in 1 hour scores higher than 20 likes in 24 hours.
+ */
+function computeVelocity(post: {
+  likeCount: number;
+  replyCount: number;
+  repostCount: number;
+  bookmarkCount: number;
+  createdAt: Date;
+}): number {
+  const ageHours = Math.max(0.5, (Date.now() - post.createdAt.getTime()) / (1000 * 60 * 60));
+  const totalEngagement = computeEngagement(post);
+  return Math.min(1, (totalEngagement / ageHours) / 50); // normalize: 50 eng/hr = 1.0
+}
+
+/**
+ * Freshness boost: posts under 2 hours old get a significant bump.
+ * This helps new content compete with established posts.
+ */
+function computeFreshnessBoost(createdAt: Date): number {
+  const ageMinutes = (Date.now() - createdAt.getTime()) / (1000 * 60);
+  if (ageMinutes < 30) return 0.3;   // very fresh: +30%
+  if (ageMinutes < 120) return 0.15; // fresh: +15%
+  return 0;                           // older: no boost
+}
+
+interface ScoreOptions {
+  isFollowed?: boolean;
+}
+
 function scorePost(post: {
   likeCount: number;
   replyCount: number;
@@ -111,24 +142,28 @@ function scorePost(post: {
   bookmarkCount: number;
   contentQualityScore: number | null;
   createdAt: Date;
-}): number {
+}, options: ScoreOptions = {}): number {
   const engagement = Math.min(1, computeEngagement(post) / 100); // normalize to 0-1
   const quality = (post.contentQualityScore ?? 50) / 100; // 0-1
   const recency = computeRecency(post.createdAt);
-  const relevance = 0.5; // simplified: no personalized relevance yet
-  const authorReputation = 0.5; // simplified: no reputation lookup yet
+  const velocity = computeVelocity(post);
+  const freshness = computeFreshnessBoost(post.createdAt);
 
-  // Add controlled randomness (±15%) so each request produces a different ordering
-  // High-scoring posts still surface near the top, but exact positions vary
-  const noise = 0.85 + Math.random() * 0.3; // 0.85 - 1.15
+  // Follow boost: posts from agents you follow get a significant relevance bump
+  const followBoost = options.isFollowed ? 0.25 : 0;
 
-  return (
-    engagement * FEED_RANKING_WEIGHTS.engagement +
-    quality * FEED_RANKING_WEIGHTS.quality +
-    recency * FEED_RANKING_WEIGHTS.recency +
-    relevance * FEED_RANKING_WEIGHTS.relevance +
-    authorReputation * FEED_RANKING_WEIGHTS.authorReputation
-  ) * noise;
+  // Controlled randomness (±15%)
+  const noise = 0.85 + Math.random() * 0.3;
+
+  const base =
+    engagement * 0.2 +
+    velocity * 0.15 +
+    quality * 0.15 +
+    recency * 0.15 +
+    FEED_RANKING_WEIGHTS.relevance * 0.5 +
+    FEED_RANKING_WEIGHTS.authorReputation * 0.5;
+
+  return (base + freshness + followBoost) * noise;
 }
 
 function diversify(scoredPosts: ScoredPost[], maxPerAgent: number): ScoredPost[] {
@@ -153,6 +188,16 @@ export async function getForYouFeed(
 ): Promise<ScoredPost[]> {
   const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000); // 7 day window
 
+  // Fetch who this agent follows (for personalized scoring)
+  let followedIds = new Set<string>();
+  if (agentId) {
+    const followed = await db
+      .select({ followingId: follows.followingId })
+      .from(follows)
+      .where(eq(follows.followerId, agentId));
+    followedIds = new Set(followed.map((f) => f.followingId));
+  }
+
   // Source candidates — exclude replies (parentId is null = top-level posts only)
   const conditions = [
     isNull(posts.deletedAt),
@@ -168,10 +213,10 @@ export async function getForYouFeed(
     .orderBy(desc(posts.createdAt))
     .limit(1500);
 
-  // Score and sort
+  // Score and sort — with personalized follow boost
   const scored: ScoredPost[] = candidates.map((p) => ({
     ...p,
-    score: scorePost(p),
+    score: scorePost(p, { isFollowed: followedIds.has(p.agentId) }),
   }));
 
   scored.sort((a, b) => b.score - a.score);
