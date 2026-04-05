@@ -6,6 +6,7 @@ import type { PostResponse } from '@swarmfeed/shared';
 import { formatRelativeTime, formatCompactNumber, cn } from '../../lib/utils';
 import { api } from '../../lib/api-client';
 import { ReportModal } from '../Common/ReportModal';
+import { ReactionsModal } from './ReactionsModal';
 import { useAuth } from '../../lib/auth-context';
 import { PostContent } from './PostContent';
 
@@ -23,6 +24,7 @@ export function PostCard({ post, variant = 'timeline' }: PostCardProps) {
   const [repostCount, setRepostCount] = useState(post.repostCount);
   const [showMenu, setShowMenu] = useState(false);
   const [showReport, setShowReport] = useState(false);
+  const [showReactions, setShowReactions] = useState<'like' | 'repost' | null>(null);
   const isPreview = variant === 'preview';
   const isStandalone = variant === 'standalone';
   const canInteract = isAuthenticated && !isPreview;
@@ -206,41 +208,49 @@ export function PostCard({ post, variant = 'timeline' }: PostCardProps) {
                 <span className="text-xs">{formatCompactNumber(post.replyCount)}</span>
               </a>
 
-              {canInteract ? (
+              <div className="flex items-center gap-1.5">
+                {canInteract ? (
+                  <button
+                    onClick={handleRepost}
+                    className={cn(
+                      'transition-colors',
+                      reposted ? 'text-accent-green' : 'text-text-3 hover:text-accent-green',
+                    )}
+                  >
+                    <Repeat2 size={14} />
+                  </button>
+                ) : (
+                  <Repeat2 size={14} className="text-text-3" />
+                )}
                 <button
-                  onClick={handleRepost}
-                  className={cn(
-                    'group flex items-center gap-1.5 transition-colors',
-                    reposted ? 'text-accent-green' : 'text-text-3 hover:text-accent-green',
-                  )}
+                  onClick={() => repostCount > 0 && setShowReactions('repost')}
+                  className={cn('text-xs transition-colors', repostCount > 0 ? 'text-text-3 hover:text-accent-green hover:underline' : 'text-text-3')}
                 >
-                  <Repeat2 size={14} />
-                  <span className="text-xs">{formatCompactNumber(repostCount)}</span>
+                  {formatCompactNumber(repostCount)}
                 </button>
-              ) : (
-                <span className="flex items-center gap-1.5 text-text-3">
-                  <Repeat2 size={14} />
-                  <span className="text-xs">{formatCompactNumber(repostCount)}</span>
-                </span>
-              )}
+              </div>
 
-              {canInteract ? (
+              <div className="flex items-center gap-1.5">
+                {canInteract ? (
+                  <button
+                    onClick={handleLike}
+                    className={cn(
+                      'transition-colors',
+                      liked ? 'text-accent-green' : 'text-text-3 hover:text-accent-green',
+                    )}
+                  >
+                    <Heart size={14} className={liked ? 'fill-accent-green' : ''} />
+                  </button>
+                ) : (
+                  <Heart size={14} className="text-text-3" />
+                )}
                 <button
-                  onClick={handleLike}
-                  className={cn(
-                    'group flex items-center gap-1.5 transition-colors',
-                    liked ? 'text-accent-green' : 'text-text-3 hover:text-accent-green',
-                  )}
+                  onClick={() => likeCount > 0 && setShowReactions('like')}
+                  className={cn('text-xs transition-colors', likeCount > 0 ? 'text-text-3 hover:text-accent-green hover:underline' : 'text-text-3')}
                 >
-                  <Heart size={14} className={liked ? 'fill-accent-green' : ''} />
-                  <span className="text-xs">{formatCompactNumber(likeCount)}</span>
+                  {formatCompactNumber(likeCount)}
                 </button>
-              ) : (
-                <span className="flex items-center gap-1.5 text-text-3">
-                  <Heart size={14} className={liked ? 'fill-accent-green' : ''} />
-                  <span className="text-xs">{formatCompactNumber(likeCount)}</span>
-                </span>
-              )}
+              </div>
 
               {!isPreview && (
                 <div className="flex items-center gap-3 ml-auto">
@@ -287,6 +297,14 @@ export function PostCard({ post, variant = 'timeline' }: PostCardProps) {
           targetType="post"
           targetId={post.id}
           onClose={() => setShowReport(false)}
+        />
+      )}
+
+      {showReactions && (
+        <ReactionsModal
+          postId={post.id}
+          initialTab={showReactions}
+          onClose={() => setShowReactions(null)}
         />
       )}
     </>

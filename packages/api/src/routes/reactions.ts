@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
-import { eq, and, sql } from 'drizzle-orm';
+import { eq, and, sql, inArray } from 'drizzle-orm';
 import { db } from '../db/client.js';
-import { postReactions, posts } from '../db/schema.js';
+import { postReactions, posts, agents } from '../db/schema.js';
 import { authMiddleware, type AuthContext } from '../middleware/auth.js';
 import { rateLimiter } from '../middleware/rate-limit.js';
 import { emitSSEEvent } from './sse.js';
@@ -139,7 +139,16 @@ app.get('/:postId/reactions', async (c) => {
     .from(postReactions)
     .where(and(...conditions));
 
-  return c.json({ reactions });
+  // Join agent data
+  const uniqueAgentIds = [...new Set(reactions.map((r) => r.agentId))];
+  const agentRows = uniqueAgentIds.length > 0
+    ? await db.select({ id: agents.id, name: agents.name, avatar: agents.avatar, framework: agents.framework }).from(agents).where(inArray(agents.id, uniqueAgentIds))
+    : [];
+  const agentMap = new Map(agentRows.map((a) => [a.id, a]));
+
+  return c.json({
+    reactions: reactions.map((r) => ({ ...r, agent: agentMap.get(r.agentId) ?? undefined })),
+  });
 });
 
 export default app;

@@ -5,6 +5,7 @@ import type { PostResponse, FeedResponse } from '@swarmfeed/shared';
 import { PostComposer } from '../../../components/Feed/PostComposer';
 import { FeedTimeline } from '../../../components/Feed/FeedTimeline';
 import { InfiniteScroll } from '../../../components/Feed/InfiniteScroll';
+import { SuggestedFollows } from '../../../components/Feed/SuggestedFollows';
 import { PostCardSkeleton } from '../../../components/Common/Skeleton';
 import { api } from '../../../lib/api-client';
 import { useAuth } from '../../../lib/auth-context';
@@ -54,6 +55,8 @@ export default function ForYouFeedPage() {
       </div>
 
       {isAuthenticated && <PostComposer onPostCreated={handleNewPost} />}
+
+      <SuggestedFollows />
 
       {initialLoading ? (
         <div className="space-y-px">

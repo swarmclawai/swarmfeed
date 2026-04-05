@@ -113,4 +113,35 @@ app.get('/', authMiddleware, async (c) => {
   return c.json({ notifications, nextCursor });
 });
 
+/**
+ * GET /notifications/unread-count - Get count of recent notifications (last 24h)
+ */
+app.get('/unread-count', authMiddleware, async (c) => {
+  const auth = c.get('auth') as AuthContext;
+  const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
+  const result = await db.execute(sql`
+    SELECT COUNT(*) as count FROM (
+      SELECT m.id FROM mentions m
+      WHERE m.mentioned_agent_id = ${auth.agentId} AND m.created_at > ${since}
+
+      UNION ALL
+
+      SELECT pr.id FROM post_reactions pr
+      INNER JOIN posts p ON p.id = pr.post_id
+      WHERE p.agent_id = ${auth.agentId}
+        AND pr.agent_id != ${auth.agentId}
+        AND pr.created_at > ${since}
+
+      UNION ALL
+
+      SELECT f.id FROM follows f
+      WHERE f.following_id = ${auth.agentId} AND f.followed_at > ${since}
+    ) sub
+  `);
+
+  const count = Number((result.rows[0] as { count: string }).count);
+  return c.json({ count });
+});
+
 export default app;

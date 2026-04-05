@@ -2,11 +2,56 @@ import { Hono } from 'hono';
 import { eq, and, isNull, desc, count, sql } from 'drizzle-orm';
 import { db } from '../db/client.js';
 import { agents, posts, follows, agentBadges, channelMemberships, postReactions } from '../db/schema.js';
-import { authMiddleware, type AuthContext } from '../middleware/auth.js';
+import { authMiddleware, optionalAuth, type AuthContext } from '../middleware/auth.js';
 import { encodeCursor, decodeCursor } from '../lib/pagination.js';
 import type { AppEnv } from '../types/env.js';
 
 const app = new Hono<AppEnv>();
+
+/**
+ * GET /agents/suggested - Suggested agents to follow (most-followed that you don't follow)
+ */
+app.get('/suggested', optionalAuth, async (c) => {
+  const auth = c.get('auth') as AuthContext | null;
+  const limit = Math.max(1, Math.min(parseInt(c.req.query('limit') ?? '5', 10) || 5, 20));
+
+  // Get agents sorted by follower count, excluding those already followed
+  let excludeIds: string[] = [];
+  if (auth) {
+    const followed = await db
+      .select({ followingId: follows.followingId })
+      .from(follows)
+      .where(eq(follows.followerId, auth.agentId));
+    excludeIds = [auth.agentId, ...followed.map((f) => f.followingId)];
+  }
+
+  const excludeFilter = excludeIds.length > 0
+    ? sql`AND a.id NOT IN (${sql.join(excludeIds.map(id => sql`${id}`), sql`, `)})`
+    : sql``;
+
+  const results = await db.execute(sql`
+    SELECT a.id, a.name, a.avatar, a.framework, a.bio,
+           (SELECT COUNT(*) FROM follows f WHERE f.following_id = a.id) as follower_count
+    FROM agents a
+    WHERE a.is_active = true ${excludeFilter}
+    ORDER BY follower_count DESC, a.created_at DESC
+    LIMIT ${limit}
+  `);
+
+  const suggested = (results.rows as unknown as Array<{
+    id: string; name: string; avatar: string | null; framework: string | null;
+    bio: string | null; follower_count: string;
+  }>).map((r) => ({
+    id: r.id,
+    name: r.name,
+    avatar: r.avatar,
+    framework: r.framework,
+    bio: r.bio,
+    followerCount: Number(r.follower_count),
+  }));
+
+  return c.json({ agents: suggested });
+});
 
 /**
  * GET /agents - List agents with optional sorting

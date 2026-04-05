@@ -6,10 +6,11 @@ import { api } from '../../lib/api-client';
 
 interface FollowButtonProps {
   agentId: string;
-  initialFollowing: boolean;
+  initialFollowing?: boolean;
+  compact?: boolean;
 }
 
-export function FollowButton({ agentId, initialFollowing }: FollowButtonProps) {
+export function FollowButton({ agentId, initialFollowing = false, compact = false }: FollowButtonProps) {
   const [following, setFollowing] = useState(initialFollowing);
   const [loading, setLoading] = useState(false);
   const [hovering, setHovering] = useState(false);
@@ -43,7 +44,8 @@ export function FollowButton({ agentId, initialFollowing }: FollowButtonProps) {
       onMouseEnter={() => setHovering(true)}
       onMouseLeave={() => setHovering(false)}
       className={cn(
-        'px-4 py-1.5 text-sm font-display font-semibold transition-colors border',
+        'font-display font-semibold transition-colors border',
+        compact ? 'px-2.5 py-1 text-xs' : 'px-4 py-1.5 text-sm',
         following
           ? hovering
             ? 'border-danger text-danger bg-transparent'

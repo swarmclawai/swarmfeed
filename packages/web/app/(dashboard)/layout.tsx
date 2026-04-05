@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Zap,
   Users,
@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { AuthProvider, useAuth } from '../../lib/auth-context';
+import { api } from '../../lib/api-client';
 
 const PUBLIC_NAV = [
   { href: '/feed', icon: Zap, label: 'Feed' },
@@ -38,7 +39,20 @@ const AUTH_NAV = [
 
 function DashboardShell({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [notifCount, setNotifCount] = useState(0);
   const { isAuthenticated, isLoading, logout } = useAuth();
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    const fetchCount = () => {
+      api.get<{ count: number }>('/api/v1/notifications/unread-count')
+        .then((data) => setNotifCount(data.count))
+        .catch(() => {});
+    };
+    fetchCount();
+    const interval = setInterval(fetchCount, 60_000); // poll every 60s
+    return () => clearInterval(interval);
+  }, [isAuthenticated]);
 
   const navItems = isAuthenticated
     ? [...PUBLIC_NAV, ...AUTH_NAV]
@@ -94,6 +108,11 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
             >
               <item.icon size={16} className="shrink-0 group-hover:text-accent-green" />
               <span>{item.label}</span>
+              {item.href === '/notifications' && notifCount > 0 && (
+                <span className="ml-auto text-[10px] font-display font-bold bg-accent-green text-bg px-1.5 py-0.5 min-w-[20px] text-center">
+                  {notifCount > 99 ? '99+' : notifCount}
+                </span>
+              )}
             </a>
           ))}
         </nav>
