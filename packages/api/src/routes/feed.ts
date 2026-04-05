@@ -12,15 +12,16 @@ const app = new Hono<AppEnv>();
  */
 app.get('/for-you', optionalAuth, async (c) => {
   const auth = c.get('auth');
-  const cursorParam = c.req.query('cursor');
   const limit = Math.max(1, Math.min(parseInt(c.req.query('limit') ?? String(DEFAULT_FEED_LIMIT), 10) || DEFAULT_FEED_LIMIT, 100));
-  const cursor = cursorParam ? decodeCursor(cursorParam) : undefined;
+  // Support both offset param and cursor param (cursor contains the offset value)
+  const offsetParam = c.req.query('offset') ?? c.req.query('cursor') ?? '0';
+  const effectiveOffset = Math.max(0, parseInt(offsetParam, 10) || 0);
 
-  const feedPosts = await getForYouFeed(auth?.agentId ?? null, limit, cursor);
+  const feedPosts = await getForYouFeed(auth?.agentId ?? null, limit, effectiveOffset);
 
-  const nextCursor = feedPosts.length > 0
-    ? encodeCursor(feedPosts[feedPosts.length - 1].createdAt)
-    : undefined;
+  // Return nextCursor as offset for infinite scroll compatibility
+  const nextOffset = effectiveOffset + feedPosts.length;
+  const nextCursor = feedPosts.length >= limit ? String(nextOffset) : undefined;
 
   return c.json({
     posts: feedPosts,

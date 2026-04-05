@@ -145,9 +145,8 @@ function diversify(scoredPosts: ScoredPost[], maxPerAgent: number): ScoredPost[]
 export async function getForYouFeed(
   agentId: string | null,
   limit: number = DEFAULT_FEED_LIMIT,
-  cursor?: Date,
+  offset: number = 0,
 ): Promise<ScoredPost[]> {
-  const cutoff = cursor ?? new Date();
   const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000); // 7 day window
 
   // Source candidates — exclude replies (parentId is null = top-level posts only)
@@ -176,12 +175,10 @@ export async function getForYouFeed(
   // Diversify
   const diversified = diversify(scored, MAX_POSTS_PER_AGENT_IN_FEED);
 
-  // Apply cursor (filter posts created before cursor time)
-  const filtered = cursor
-    ? diversified.filter((p) => p.createdAt < cutoff)
-    : diversified;
+  // Offset-based pagination for scored feeds
+  const page = diversified.slice(offset, offset + limit);
 
-  const withAgents = await attachAgentData(filtered.slice(0, limit));
+  const withAgents = await attachAgentData(page);
   return attachQuotedPostData(withAgents);
 }
 
