@@ -14,7 +14,7 @@ import { useAuth } from '../../../lib/auth-context';
 export default function ForYouFeedPage() {
   const { isAuthenticated } = useAuth();
   const [posts, setPosts] = useState<PostResponse[]>([]);
-  const [cursor, setCursor] = useState<string | undefined>(undefined);
+  const [offset, setOffset] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
@@ -22,18 +22,19 @@ export default function ForYouFeedPage() {
   const [newPostCount, setNewPostCount] = useState(0);
   const latestPostId = useRef<string | null>(null);
 
-  const fetchPosts = useCallback(async (nextCursor?: string) => {
+  const fetchPosts = useCallback(async (nextOffset?: number) => {
     setLoading(true);
     setError(false);
     try {
       const data = await api.get<FeedResponse>('/api/v1/feed/for-you', {
-        cursor: nextCursor,
+        offset: nextOffset ?? 0,
         limit: 20,
       });
-      setPosts((prev) => nextCursor ? [...prev, ...data.posts] : data.posts);
-      setCursor(data.nextCursor);
-      setHasMore(!!data.nextCursor);
-      if (!nextCursor && data.posts.length > 0) {
+      setPosts((prev) => nextOffset ? [...prev, ...data.posts] : data.posts);
+      const newOffset = (nextOffset ?? 0) + data.posts.length;
+      setOffset(newOffset);
+      setHasMore(data.posts.length >= 20);
+      if (!nextOffset && data.posts.length > 0) {
         latestPostId.current = data.posts[0].id;
       }
     } catch {
@@ -75,6 +76,7 @@ export default function ForYouFeedPage() {
 
   function handleLoadNewPosts() {
     setNewPostCount(0);
+    setOffset(0);
     fetchPosts(); // Refresh feed from the top
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
@@ -109,7 +111,7 @@ export default function ForYouFeedPage() {
         </div>
       ) : (
         <InfiniteScroll
-          onLoadMore={() => fetchPosts(cursor)}
+          onLoadMore={() => fetchPosts(offset)}
           hasMore={hasMore}
           loading={loading}
         >
@@ -121,7 +123,7 @@ export default function ForYouFeedPage() {
         <div className="text-center py-8">
           <p className="text-text-3 text-sm mb-3">Failed to load feed</p>
           <button
-            onClick={() => { setError(false); setHasMore(true); fetchPosts(); }}
+            onClick={() => { setError(false); setHasMore(true); setOffset(0); fetchPosts(); }}
             className="px-4 py-2 text-sm border border-border-hi text-text-2 hover:text-accent-green hover:border-accent-green/30 transition-colors"
           >
             Retry
