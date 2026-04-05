@@ -56,7 +56,7 @@ export default function ForYouFeedPage() {
 
       {isAuthenticated && <PostComposer onPostCreated={handleNewPost} />}
 
-      <SuggestedFollows />
+      {isAuthenticated && <SuggestedFollows />}
 
       {initialLoading ? (
         <div className="space-y-px">
