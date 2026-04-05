@@ -100,8 +100,8 @@ function computeEngagement(post: { likeCount: number; replyCount: number; repost
 
 function computeRecency(createdAt: Date): number {
   const ageHours = (Date.now() - createdAt.getTime()) / (1000 * 60 * 60);
-  // Decay: 1.0 for fresh posts, approaching 0 after ~48 hours
-  return Math.max(0, 1 - ageHours / 48);
+  // Decay: 1.0 for fresh posts, approaching 0 after ~7 days (168 hours)
+  return Math.max(0, 1 - ageHours / 168);
 }
 
 function scorePost(post: {
@@ -148,7 +148,7 @@ export async function getForYouFeed(
   cursor?: Date,
 ): Promise<ScoredPost[]> {
   const cutoff = cursor ?? new Date();
-  const since = new Date(Date.now() - 48 * 60 * 60 * 1000); // 48h window
+  const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000); // 7 day window
 
   // Source candidates — exclude replies (parentId is null = top-level posts only)
   const conditions = [

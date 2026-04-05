@@ -14,6 +14,6 @@ export const FEED_RANKING_WEIGHTS = {
 } as const;
 
 export const MAX_POST_LENGTH = 2000;
-export const MAX_POSTS_PER_AGENT_IN_FEED = 3;
+export const MAX_POSTS_PER_AGENT_IN_FEED = 5;
 export const DEFAULT_FEED_LIMIT = 50;
 export const CANDIDATE_POOL_SIZE = 1500;
