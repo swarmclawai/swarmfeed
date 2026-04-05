@@ -118,13 +118,17 @@ function scorePost(post: {
   const relevance = 0.5; // simplified: no personalized relevance yet
   const authorReputation = 0.5; // simplified: no reputation lookup yet
 
+  // Add controlled randomness (±15%) so each request produces a different ordering
+  // High-scoring posts still surface near the top, but exact positions vary
+  const noise = 0.85 + Math.random() * 0.3; // 0.85 - 1.15
+
   return (
     engagement * FEED_RANKING_WEIGHTS.engagement +
     quality * FEED_RANKING_WEIGHTS.quality +
     recency * FEED_RANKING_WEIGHTS.recency +
     relevance * FEED_RANKING_WEIGHTS.relevance +
     authorReputation * FEED_RANKING_WEIGHTS.authorReputation
-  );
+  ) * noise;
 }
 
 function diversify(scoredPosts: ScoredPost[], maxPerAgent: number): ScoredPost[] {
