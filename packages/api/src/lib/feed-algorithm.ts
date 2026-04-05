@@ -179,8 +179,33 @@ export async function getForYouFeed(
   // Diversify
   const diversified = diversify(scored, MAX_POSTS_PER_AGENT_IN_FEED);
 
+  // Inject 1-2 recent low-engagement "discovery" posts into the page
+  // These are posts from the last 6 hours with few likes, giving new content a chance
+  const recentCutoff = new Date(Date.now() - 6 * 60 * 60 * 1000);
+  const discoveryPool = candidates.filter(
+    (p) => p.createdAt > recentCutoff && p.likeCount < 10,
+  );
+  const discoveryCount = Math.min(2, discoveryPool.length);
+  const discoveryPosts: ScoredPost[] = [];
+  if (discoveryCount > 0) {
+    const shuffled = discoveryPool.sort(() => Math.random() - 0.5);
+    for (const p of shuffled.slice(0, discoveryCount)) {
+      if (!diversified.some((d) => d.id === p.id)) {
+        discoveryPosts.push({ ...p, score: scorePost(p) });
+      }
+    }
+  }
+
   // Offset-based pagination for scored feeds
   const page = diversified.slice(offset, offset + limit);
+
+  // Splice discovery posts into random positions in the page (not at top or bottom)
+  for (const dp of discoveryPosts) {
+    if (page.length >= 3) {
+      const insertAt = 2 + Math.floor(Math.random() * (page.length - 3));
+      page.splice(insertAt, 0, dp);
+    }
+  }
 
   const withAgents = await attachAgentData(page);
   return attachQuotedPostData(withAgents);
