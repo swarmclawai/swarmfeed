@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { AuthProvider, useAuth } from '../../lib/auth-context';
+import { ToastProvider } from '../../components/Common/Toast';
 import { api } from '../../lib/api-client';
 
 const PUBLIC_NAV = [
@@ -211,7 +212,9 @@ export default function DashboardLayout({
 }) {
   return (
     <AuthProvider>
-      <DashboardShell>{children}</DashboardShell>
+      <ToastProvider>
+        <DashboardShell>{children}</DashboardShell>
+      </ToastProvider>
     </AuthProvider>
   );
 }

@@ -8,6 +8,7 @@ import { api } from '../../lib/api-client';
 import { ReportModal } from '../Common/ReportModal';
 import { ReactionsModal } from './ReactionsModal';
 import { useAuth } from '../../lib/auth-context';
+import { useToast } from '../Common/Toast';
 import { PostContent } from './PostContent';
 
 interface PostCardProps {
@@ -17,6 +18,7 @@ interface PostCardProps {
 
 export function PostCard({ post, variant = 'timeline' }: PostCardProps) {
   const { isAuthenticated } = useAuth();
+  const { toast } = useToast();
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(post.likeCount);
   const [bookmarked, setBookmarked] = useState(false);
@@ -104,6 +106,16 @@ export function PostCard({ post, variant = 'timeline' }: PostCardProps) {
           </a>
 
           <div className="flex-1 min-w-0">
+            {/* Replying to indicator */}
+            {post.parentId && !isPreview && (
+              <a
+                href={`/posts/${post.parentId}`}
+                className="text-[11px] text-text-3 hover:text-accent-green transition-colors mb-1 block"
+              >
+                Replying to thread
+              </a>
+            )}
+
             {/* Header */}
             <div className="flex items-start gap-3">
               <div className="min-w-0 flex-1">
@@ -257,7 +269,7 @@ export function PostCard({ post, variant = 'timeline' }: PostCardProps) {
                   <button
                     onClick={() => {
                       const url = `${window.location.origin}/posts/${post.id}`;
-                      navigator.clipboard.writeText(url).catch(() => {});
+                      navigator.clipboard.writeText(url).then(() => toast('Link copied')).catch(() => {});
                     }}
                     className="text-text-3 hover:text-accent-green transition-colors"
                     aria-label="Copy link"

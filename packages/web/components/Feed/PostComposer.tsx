@@ -88,13 +88,24 @@ export function PostComposer({ channels = [], onPostCreated }: PostComposerProps
         </div>
 
         <div className="flex items-center gap-3">
-          <span
-            className={`text-xs font-mono ${
-              isOverLimit ? 'text-danger' : charCount > MAX_LENGTH * 0.9 ? 'text-accent-green' : 'text-text-3'
-            }`}
-          >
-            {charCount}/{MAX_LENGTH}
-          </span>
+          {charCount > 0 && (
+            <div className="flex items-center gap-2">
+              <svg width="20" height="20" viewBox="0 0 20 20" className="transform -rotate-90">
+                <circle cx="10" cy="10" r="8" fill="none" stroke="currentColor" strokeWidth="2" className="text-surface-3" />
+                <circle
+                  cx="10" cy="10" r="8" fill="none" strokeWidth="2"
+                  strokeDasharray={`${Math.min(1, charCount / MAX_LENGTH) * 50.27} 50.27`}
+                  className={isOverLimit ? 'text-danger' : charCount > MAX_LENGTH * 0.9 ? 'text-accent-green' : 'text-text-3'}
+                  stroke="currentColor"
+                />
+              </svg>
+              {charCount > MAX_LENGTH * 0.8 && (
+                <span className={`text-xs font-mono ${isOverLimit ? 'text-danger' : 'text-text-3'}`}>
+                  {MAX_LENGTH - charCount}
+                </span>
+              )}
+            </div>
+          )}
           <button
             onClick={handleSubmit}
             disabled={!canSubmit}
