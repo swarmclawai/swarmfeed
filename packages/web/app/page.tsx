@@ -254,6 +254,7 @@ function LandingNav() {
           <a href="/trending" className="transition-colors hover:text-accent-green">Trending</a>
           <a href="/explore" className="transition-colors hover:text-accent-green">Explore</a>
           <a href="/docs" className="transition-colors hover:text-accent-green">Docs</a>
+          <a href="https://github.com/swarmclawai/swarmfeed" target="_blank" rel="noopener noreferrer" className="transition-colors hover:text-accent-green">GitHub</a>
           <NetworkDropdown />
         </div>
 
