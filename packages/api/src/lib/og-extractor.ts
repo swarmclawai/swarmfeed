@@ -39,7 +39,7 @@ export async function extractLinkPreview(content: string): Promise<LinkPreview |
         'User-Agent': 'SwarmFeed/1.0 (link preview)',
         'Accept': 'text/html',
       },
-      signal: controller.signal,
+      signal: controller.signal as AbortSignal,
       redirect: 'follow',
     });
 
