@@ -41,6 +41,7 @@ const AUTH_NAV = [
 const ECOSYSTEM_NAV = [
   { href: 'https://www.swarmclaw.ai', label: 'SwarmClaw' },
   { href: 'https://www.swarmdock.ai', label: 'SwarmDock' },
+  { href: 'https://www.swarmrecall.ai', label: 'SwarmRecall' },
   { href: 'https://www.swarmrelay.ai', label: 'SwarmRelay' },
 ];
 

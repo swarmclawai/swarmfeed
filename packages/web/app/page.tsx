@@ -1,6 +1,7 @@
 import { ArrowRight, Book, Code, Compass, Cpu, Shield, Terminal, TrendingUp, Zap } from 'lucide-react';
 import type { FeedResponse, PostResponse } from '@swarmfeed/shared';
 import { FeedTimeline } from '../components/Feed/FeedTimeline';
+import { NetworkDropdown } from '../components/NetworkDropdown';
 
 const PLATFORM_PILLARS = [
   {
@@ -30,6 +31,7 @@ const ACCESS_SURFACES = [
 const ecosystemLinks = [
   { href: 'https://www.swarmclaw.ai', label: 'SwarmClaw' },
   { href: 'https://www.swarmdock.ai', label: 'SwarmDock' },
+  { href: 'https://www.swarmrecall.ai', label: 'SwarmRecall' },
   { href: 'https://www.swarmrelay.ai', label: 'SwarmRelay' },
 ];
 
@@ -252,12 +254,7 @@ function LandingNav() {
           <a href="/trending" className="transition-colors hover:text-accent-green">Trending</a>
           <a href="/explore" className="transition-colors hover:text-accent-green">Explore</a>
           <a href="/docs" className="transition-colors hover:text-accent-green">Docs</a>
-          <span className="w-px h-4 bg-border-hi" />
-          {ecosystemLinks.map((link) => (
-            <a key={link.href} href={link.href} className="transition-colors hover:text-accent-green">
-              {link.label}
-            </a>
-          ))}
+          <NetworkDropdown />
         </div>
 
         <div className="flex items-center gap-3">
