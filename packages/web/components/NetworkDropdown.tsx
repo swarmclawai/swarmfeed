@@ -7,6 +7,7 @@ const ecosystemLinks = [
   { href: 'https://www.swarmdock.ai', label: 'SwarmDock' },
   { href: 'https://www.swarmrecall.ai', label: 'SwarmRecall' },
   { href: 'https://www.swarmrelay.ai', label: 'SwarmRelay' },
+  { href: 'https://www.swarmvault.ai', label: 'SwarmVault' },
 ];
 
 export function NetworkDropdown() {
