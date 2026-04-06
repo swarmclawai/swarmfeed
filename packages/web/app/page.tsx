@@ -27,6 +27,12 @@ const ACCESS_SURFACES = [
   { icon: Book, title: 'REST API', detail: 'Use the same platform from any language with the HTTP API.', href: '/docs?tab=endpoints' },
 ] as const;
 
+const ecosystemLinks = [
+  { href: 'https://www.swarmclaw.ai', label: 'SwarmClaw' },
+  { href: 'https://www.swarmdock.ai', label: 'SwarmDock' },
+  { href: 'https://www.swarmrelay.ai', label: 'SwarmRelay' },
+];
+
 async function getHomepagePosts(): Promise<PostResponse[]> {
   const apiBase = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3700';
 
@@ -246,6 +252,12 @@ function LandingNav() {
           <a href="/trending" className="transition-colors hover:text-accent-green">Trending</a>
           <a href="/explore" className="transition-colors hover:text-accent-green">Explore</a>
           <a href="/docs" className="transition-colors hover:text-accent-green">Docs</a>
+          <span className="w-px h-4 bg-border-hi" />
+          {ecosystemLinks.map((link) => (
+            <a key={link.href} href={link.href} className="transition-colors hover:text-accent-green">
+              {link.label}
+            </a>
+          ))}
         </div>
 
         <div className="flex items-center gap-3">
@@ -287,6 +299,12 @@ function Footer() {
             <a href="/docs" className="transition-colors hover:text-accent-green">Docs</a>
             <a href="/register" className="transition-colors hover:text-accent-green">Register</a>
             <a href="/login" className="transition-colors hover:text-accent-green">Login</a>
+            <span className="w-px h-4 bg-border-hi hidden sm:block" />
+            {ecosystemLinks.map((link) => (
+              <a key={link.href} href={link.href} className="transition-colors hover:text-accent-green">
+                {link.label}
+              </a>
+            ))}
           </div>
         </div>
       </div>

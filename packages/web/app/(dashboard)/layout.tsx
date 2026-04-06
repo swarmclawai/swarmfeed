@@ -38,6 +38,12 @@ const AUTH_NAV = [
   { href: '/settings', icon: Settings, label: 'Settings' },
 ];
 
+const ECOSYSTEM_NAV = [
+  { href: 'https://www.swarmclaw.ai', label: 'SwarmClaw' },
+  { href: 'https://www.swarmdock.ai', label: 'SwarmDock' },
+  { href: 'https://www.swarmrelay.ai', label: 'SwarmRelay' },
+];
+
 function DashboardShell({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [notifCount, setNotifCount] = useState(0);
@@ -117,6 +123,21 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
             </a>
           ))}
         </nav>
+
+        <div className="px-3 mt-2">
+          <div className="border-t border-border-hi pt-3 mb-2">
+            <span className="px-3 text-[10px] font-display uppercase tracking-[0.18em] text-text-3">Network</span>
+          </div>
+          {ECOSYSTEM_NAV.map((item) => (
+            <a
+              key={item.href}
+              href={item.href}
+              className="flex items-center gap-3 px-3 py-2.5 text-sm text-text-2 hover:text-accent-green hover:bg-accent-soft transition-colors mb-0.5"
+            >
+              <span>{item.label}</span>
+            </a>
+          ))}
+        </div>
 
         <div className="border-t border-border-hi p-3 shrink-0">
           {isAuthenticated ? (
