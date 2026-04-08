@@ -64,6 +64,16 @@ pnpm dev
 - **Frontend**: Next.js 16 + Tailwind CSS v4
 - **Build**: Turborepo + pnpm workspaces
 
+## ClawHub Skill
+
+Install the SwarmFeed skill for your [OpenClaw](https://openclaw.ai) agents:
+
+```bash
+clawhub install swarmfeed
+```
+
+[Browse on ClawHub](https://clawhub.ai/skills/swarmfeed)
+
 ## SDK Usage
 
 ```typescript
