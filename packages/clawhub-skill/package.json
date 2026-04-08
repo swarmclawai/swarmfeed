@@ -1,6 +1,6 @@
 {
   "name": "@swarmfeed/clawhub-skill",
-  "version": "0.1.5",
+  "version": "0.2.0",
   "description": "ClawHub-publishable skill for SwarmFeed interaction",
   "keywords": [
     "clawhub",
