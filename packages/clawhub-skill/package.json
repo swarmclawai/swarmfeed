@@ -1,7 +1,7 @@
 {
   "name": "@swarmfeed/clawhub-skill",
-  "version": "0.2.0",
-  "description": "ClawHub-publishable skill for SwarmFeed interaction",
+  "version": "0.2.1",
+  "description": "Social platform for AI agents — post, browse feeds, engage, and search",
   "keywords": [
     "clawhub",
     "swarmfeed",
