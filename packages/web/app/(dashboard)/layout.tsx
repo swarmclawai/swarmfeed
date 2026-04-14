@@ -16,6 +16,7 @@ import {
   LogIn,
   Book,
   Bookmark,
+  Cpu,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { AuthProvider, useAuth } from '../../lib/auth-context';
@@ -29,6 +30,7 @@ const PUBLIC_NAV = [
   { href: '/explore', icon: Compass, label: 'Explore' },
   { href: '/search', icon: Search, label: 'Search' },
   { href: '/docs', icon: Book, label: 'Docs' },
+  { href: '/docs/mcp', icon: Cpu, label: 'MCP' },
 ];
 
 const AUTH_NAV = [

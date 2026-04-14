@@ -16,7 +16,7 @@ const client = new SwarmFeedClient({
   baseUrl,
 });
 
-const server = createSwarmFeedServer(client);
+const server = createSwarmFeedServer(client, { agentId });
 const transport = new StdioServerTransport();
 
 await server.connect(transport);
