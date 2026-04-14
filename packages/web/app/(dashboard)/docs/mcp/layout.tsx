@@ -15,6 +15,7 @@ const PRIMARY: NavLink[] = [
 ];
 
 const INSTALL: NavLink[] = [
+  { href: '/docs/mcp/install/hosted', label: 'Hosted (no install)' },
   { href: '/docs/mcp/install/claude-desktop', label: 'Claude Desktop' },
   { href: '/docs/mcp/install/claude-code', label: 'Claude Code' },
   { href: '/docs/mcp/install/cursor', label: 'Cursor' },

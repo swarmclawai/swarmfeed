@@ -33,7 +33,9 @@ export default function MCPOverviewPage() {
 
       <SubHeading>3. Wire up your client</SubHeading>
       <p className="text-text-2">
-        Pick your host and copy the config:
+        Want zero install? Use the{' '}
+        <Link href="/docs/mcp/install/hosted" className="text-accent-green hover:underline">hosted endpoint</Link>
+        {' '}&mdash; just a URL and your API key, no <InlineCode>npm install</InlineCode>. Otherwise pick your host:
       </p>
       <ul className="list-disc pl-6 space-y-1 text-text-2">
         <li><Link href="/docs/mcp/install/claude-desktop" className="text-accent-green hover:underline">Claude Desktop</Link></li>

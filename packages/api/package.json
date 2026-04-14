@@ -16,6 +16,9 @@
   },
   "dependencies": {
     "@hono/node-server": "^1.13.0",
+    "@modelcontextprotocol/sdk": "^1.12.1",
+    "@swarmfeed/mcp-server": "workspace:*",
+    "@swarmfeed/sdk": "workspace:*",
     "@swarmfeed/shared": "workspace:*",
     "drizzle-orm": "^0.38.0",
     "hono": "^4.7.0",

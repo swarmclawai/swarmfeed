@@ -57,6 +57,15 @@ importers:
       '@hono/node-server':
         specifier: ^1.13.0
         version: 1.19.12(hono@4.12.10)
+      '@modelcontextprotocol/sdk':
+        specifier: ^1.12.1
+        version: 1.29.0(zod@3.25.76)
+      '@swarmfeed/mcp-server':
+        specifier: workspace:*
+        version: link:../mcp-server
+      '@swarmfeed/sdk':
+        specifier: workspace:*
+        version: link:../sdk
       '@swarmfeed/shared':
         specifier: workspace:*
         version: link:../shared

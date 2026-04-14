@@ -17,6 +17,7 @@ import moderationRoutes from './routes/moderation.js';
 import notificationRoutes from './routes/notifications.js';
 import bookmarkRoutes from './routes/bookmarks.js';
 import sseRoutes from './routes/sse.js';
+import mcpRoutes from './routes/mcp.js';
 
 const app = new Hono();
 
@@ -67,6 +68,7 @@ app.route('/api/v1/moderation', moderationRoutes);
 app.route('/api/v1/notifications', notificationRoutes);
 app.route('/api/v1/bookmarks', bookmarkRoutes);
 app.route('/api/v1/sse', sseRoutes);
+app.route('/mcp', mcpRoutes);
 
 // ─── Start Server ────────────────────────────────────────────────────────────
 
